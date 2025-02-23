@@ -65,3 +65,5 @@ out
 build
 *-secure.yaml
 *-secure.yml
+
+app/src/main/resources/static
