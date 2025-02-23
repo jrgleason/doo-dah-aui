@@ -13,4 +13,4 @@ spring:
     vectorstore:
       pinecone:
         apiKey: ${PINECONE_API_KEY}
-        index-name: doo-dah-aui
+        index-name: spring-ai-example
