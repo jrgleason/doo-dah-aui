@@ -11,10 +11,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@auth0/auth0-react": "latest",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.4.5",
+    "@stomp/stompjs": "latest",
+    "@xstate/react": "latest",
+    "axios": "^1.7.9",
     "react": "latest",
     "react-dom": "latest",
-    "@auth0/auth0-react": "latest",
-    "@stomp/stompjs": "latest",
     "tailwindcss": "next",
     "xstate": "latest"
   },

@@ -1,11 +1,8 @@
 import {fromPromise, setup} from "xstate";
 
 const fetchGlobalConfig = fromPromise(async () => {
-    console.log('[GLOBAL CONFIG ACTOR] Fetching /fe/global');
-    const response = await fetch('/fe/global');
-    const config = await response.json();
-    console.log('[GLOBAL CONFIG ACTOR] Received config:', config);
-    return config;
+    const response = await fetch('/config/global');
+    return response.json();
 });
 
 export const globalConfigMachine = setup({

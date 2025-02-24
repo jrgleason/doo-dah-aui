@@ -19,7 +19,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         (authz) ->
                                 authz
-                                        .requestMatchers("/root/protected").authenticated()
+                                        .requestMatchers(
+                                                "/root/protected",
+                                                "/chat/**",
+                                                "/config/user"
+                                        ).authenticated()
                                         .anyRequest().permitAll()
                 );
         return http.build();
