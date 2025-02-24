@@ -12,10 +12,12 @@
   },
   "dependencies": {
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "tailwindcss": "latest"
   },
   "devDependencies": {
     "@eslint/js": "latest",
+    "@tailwindcss/vite": "^4.0.8",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@vitejs/plugin-react": "latest",
@@ -24,6 +26,7 @@
     "eslint-plugin-react-hooks": "latest",
     "eslint-plugin-react-refresh": "latest",
     "globals": "latest",
-    "vite": "latest"
+    "vite": "latest",
+    "vite-plugin-sitemap": "^0.7.1"
   }
 }
