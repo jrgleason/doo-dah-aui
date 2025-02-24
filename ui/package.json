@@ -13,11 +13,14 @@
   "dependencies": {
     "react": "latest",
     "react-dom": "latest",
-    "tailwindcss": "latest"
+    "@auth0/auth0-react": "latest",
+    "@stomp/stompjs": "latest",
+    "tailwindcss": "next",
+    "xstate": "latest"
   },
   "devDependencies": {
     "@eslint/js": "latest",
-    "@tailwindcss/vite": "^4.0.8",
+    "@tailwindcss/vite": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@vitejs/plugin-react": "latest",
@@ -27,6 +30,6 @@
     "eslint-plugin-react-refresh": "latest",
     "globals": "latest",
     "vite": "latest",
-    "vite-plugin-sitemap": "^0.7.1"
+    "vite-plugin-sitemap": "latest"
   }
 }

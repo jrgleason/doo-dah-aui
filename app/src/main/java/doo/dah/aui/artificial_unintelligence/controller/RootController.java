@@ -13,4 +13,9 @@ public class RootController {
     public String root() {
         return "Root";
     }
+    @GetMapping("/protected")
+    @ResponseBody
+    public String protectedMeth() {
+        return "Super Secret";
+    }
 }
