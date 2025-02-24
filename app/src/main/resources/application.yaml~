@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: "doo-dah-aui"
+  datasource:
+    url: jdbc:sqlite:database.db
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  ai:
+    vectorstore:
+      pinecone:
+        apiKey: ${PINECONE_API_KEY}
+        index-name: spring-ai-example
