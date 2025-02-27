@@ -1,15 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send as SendIcon } from 'lucide-react';
+import React, {useEffect, useRef, useState} from 'react';
+import {Send as SendIcon} from 'lucide-react';
 import axios from 'axios';
-import { useAuth0 } from "@auth0/auth0-react";
-import { useGlobalConfig } from "../../providers/config/GlobalConfigContext.jsx";
+import {useAuth0} from "@auth0/auth0-react";
+import {useGlobalConfig} from "../../providers/config/GlobalConfigContext.jsx";
 import './ChatComponent.css';
 
-const ChatComponent = ({ chatId = 'default' }) => {
+const ChatComponent = ({chatId = 'default'}) => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const { getAccessTokenSilently } = useAuth0();
+    const {getAccessTokenSilently} = useAuth0();
     const config = useGlobalConfig();
     const messagesEndRef = useRef(null);
 
@@ -21,7 +21,7 @@ const ChatComponent = ({ chatId = 'default' }) => {
     // Ensure each chat component has its own isolated scroll area
     const scrollToBottom = () => {
         if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            messagesEndRef.current.scrollIntoView({behavior: 'smooth'});
         }
     };
 
@@ -94,7 +94,7 @@ const ChatComponent = ({ chatId = 'default' }) => {
     };
 
     // Message bubble component
-    const MessageBubble = ({ message }) => {
+    const MessageBubble = ({message}) => {
         const isUser = message.type === 'user';
         const isError = message.type === 'error';
         const isEmpty = !message.content && message.type === 'ai';
@@ -114,9 +114,12 @@ const ChatComponent = ({ chatId = 'default' }) => {
                         {isEmpty ? (
                             <div className="flex justify-center w-full py-2">
                                 <div className="flex space-x-1">
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                                         style={{animationDelay: '0ms'}}></div>
+                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                                         style={{animationDelay: '150ms'}}></div>
+                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                                         style={{animationDelay: '300ms'}}></div>
                                 </div>
                             </div>
                         ) : (
@@ -124,7 +127,7 @@ const ChatComponent = ({ chatId = 'default' }) => {
                         )}
                     </div>
                     <div className="text-xs mt-1 opacity-70 text-right">
-                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {message.timestamp.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
                     </div>
                 </div>
             </div>
@@ -139,17 +142,17 @@ const ChatComponent = ({ chatId = 'default' }) => {
             </div>
 
             {/* Messages container - each chat window has its own scrollable area */}
-            <div className="flex-1 overflow-y-auto p-4" style={{ scrollbarWidth: 'thin' }}>
+            <div className="flex-1 overflow-y-auto p-4" style={{scrollbarWidth: 'thin'}}>
                 {messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full text-gray-500">
                         Send a message to start the conversation
                     </div>
                 ) : (
                     messages.map((msg, index) => (
-                        <MessageBubble key={index} message={msg} />
+                        <MessageBubble key={index} message={msg}/>
                     ))
                 )}
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef}/>
             </div>
 
             {/* Input area */}
@@ -163,7 +166,7 @@ const ChatComponent = ({ chatId = 'default' }) => {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={1}
-                style={{ maxHeight: '120px', overflow: 'auto' }}
+                style={{maxHeight: '120px', overflow: 'auto'}}
             />
                     </div>
                     <button
@@ -175,7 +178,7 @@ const ChatComponent = ({ chatId = 'default' }) => {
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         } transition-colors`}
                     >
-                        <SendIcon size={20} />
+                        <SendIcon size={20}/>
                     </button>
                 </div>
             </div>

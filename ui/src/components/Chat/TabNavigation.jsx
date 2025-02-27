@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { MessageSquare, Database } from 'lucide-react';
+import React, {useState} from 'react';
+import {Database, MessageSquare} from 'lucide-react';
 
-const TabNavigation = ({ children }) => {
+const TabNavigation = ({children}) => {
     const [activeTab, setActiveTab] = useState(0);
 
     const tabs = React.Children.toArray(children);
@@ -18,7 +18,7 @@ const TabNavigation = ({ children }) => {
                     }`}
                     onClick={() => setActiveTab(0)}
                 >
-                    <MessageSquare size={18} className="mr-2" />
+                    <MessageSquare size={18} className="mr-2"/>
                     <span>Chat</span>
                 </button>
                 <button
@@ -29,7 +29,7 @@ const TabNavigation = ({ children }) => {
                     }`}
                     onClick={() => setActiveTab(1)}
                 >
-                    <Database size={18} className="mr-2" />
+                    <Database size={18} className="mr-2"/>
                     <span>Add Knowledge</span>
                 </button>
             </div>

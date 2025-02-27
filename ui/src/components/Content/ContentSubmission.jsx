@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Send as SendIcon, Plus as PlusIcon, Trash as TrashIcon, Link as LinkIcon } from 'lucide-react';
+import React, {useState} from 'react';
+import {Link as LinkIcon, Plus as PlusIcon, Trash as TrashIcon} from 'lucide-react';
 import axios from 'axios';
-import { useAuth0 } from "@auth0/auth0-react";
-import { useGlobalConfig } from "../../providers/config/GlobalConfigContext.jsx";
+import {useAuth0} from "@auth0/auth0-react";
+import {useGlobalConfig} from "../../providers/config/GlobalConfigContext.jsx";
 import './ContentSubmission.css';
 
 const ContentSubmission = () => {
@@ -13,8 +13,8 @@ const ContentSubmission = () => {
     const [tags, setTags] = useState([]);
     const [currentTag, setCurrentTag] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [feedbackMessage, setFeedbackMessage] = useState({ type: '', message: '' });
-    const { getAccessTokenSilently } = useAuth0();
+    const [feedbackMessage, setFeedbackMessage] = useState({type: '', message: ''});
+    const {getAccessTokenSilently} = useAuth0();
     const config = useGlobalConfig();
 
     const handleAddTag = () => {
@@ -63,7 +63,7 @@ const ContentSubmission = () => {
         }
 
         setIsSubmitting(true);
-        setFeedbackMessage({ type: '', message: '' });
+        setFeedbackMessage({type: '', message: ''});
 
         try {
             const token = await getAccessTokenSilently({
@@ -129,7 +129,7 @@ const ContentSubmission = () => {
             </div>
 
             {/* Content area */}
-            <div className="flex-1 overflow-y-auto p-4" style={{ scrollbarWidth: 'thin' }}>
+            <div className="flex-1 overflow-y-auto p-4" style={{scrollbarWidth: 'thin'}}>
                 {/* Feedback message */}
                 {feedbackMessage.message && (
                     <div className={`p-3 mb-4 rounded-lg ${
@@ -203,8 +203,9 @@ const ContentSubmission = () => {
                                 URL
                             </label>
                             <div className="flex items-center">
-                                <div className="flex-shrink-0 inline-flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 rounded-l-md">
-                                    <LinkIcon size={16} />
+                                <div
+                                    className="flex-shrink-0 inline-flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 rounded-l-md">
+                                    <LinkIcon size={16}/>
                                 </div>
                                 <input
                                     type="url"
@@ -238,7 +239,7 @@ const ContentSubmission = () => {
                                 onClick={handleAddTag}
                                 className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
-                                <PlusIcon size={16} />
+                                <PlusIcon size={16}/>
                             </button>
                         </div>
 
@@ -254,7 +255,7 @@ const ContentSubmission = () => {
                                         onClick={() => handleRemoveTag(tag)}
                                         className="ml-1 text-blue-600 hover:text-blue-800"
                                     >
-                                        <TrashIcon size={14} />
+                                        <TrashIcon size={14}/>
                                     </button>
                                 </div>
                             ))}
@@ -276,7 +277,8 @@ const ContentSubmission = () => {
                 >
                     {isSubmitting ? (
                         <div className="flex items-center">
-                            <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                            <div
+                                className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
                             Submitting...
                         </div>
                     ) : (

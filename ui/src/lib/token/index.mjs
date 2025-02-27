@@ -1,5 +1,6 @@
-import { setup, fromPromise } from 'xstate';
-import { jwtDecode } from "jwt-decode";
+import {fromPromise, setup} from 'xstate';
+import {jwtDecode} from "jwt-decode";
+
 const fetchTokenActor = fromPromise(async ({input}) => {
     try {
         const token = await input.getAccessTokenSilently();
@@ -18,93 +19,64 @@ export const tokenMachine =
     }).createMachine({
         id: 'tokenMachine',
         initial: 'checking',
-        context: ({input}) => ({
-            accessToken: null,
-            isAuthenticated: false,
-            isAdmin: false,
-            tokenExpiresAt: null,
-            getAccessTokenSilently: input.getAccessTokenSilently || null
-        }),
+        context: ({input}) => {
+            console.log('Token machine input:', input);
+            return ({
+                accessToken: null,
+                isLoaded: false,
+                isAuthenticated: false,
+                isAdmin: false,
+                getAccessTokenSilently: input.getAccessTokenSilently || null
+            })
+        },
         states: {
+            idle: {
+                on: {
+                    REFRESH: 'checking'
+                }
+            },
             checking: {
                 invoke: {
                     src: 'fetchTokenActor',
-                    input: ({context}) => ({ getAccessTokenSilently: context.getAccessTokenSilently }),
+                    input: ({context}) => ({getAccessTokenSilently: context.getAccessTokenSilently}),
                     onDone: {
-                        target: 'authenticated',
-                        actions: ({ context, event }) => {
-                            console.log('Token fetched successfully:', event.output);
-                            applyToken(context, event.output);
+                        target: 'idle',
+                        actions: ({context, event}) => {
+                            context.accessToken = event.output;
+                            context.isAuthenticated = true;
+                            context.isLoaded = true;
+                            if (event.output != null) {
+                                context.isAdmin = applyToken(event.output);
+                                console.log('isAdmin:', context.isAdmin);
+                            }
                         }
                     },
                     onError: {
-                        target: 'unauthenticated',
-                        actions: ({ context, event }) => {
-                            console.error('Error during token fetch:', event.data);
-                            clearAuthData(context);
-                        }
-                    }
-                }
-            },
-            authenticated: {
-                on: {
-                    TOKEN_EXPIRING: 'refreshing'
-                }
-            },
-            refreshing: {
-                invoke: {
-                    src: 'fetchTokenActor',
-                    onDone: {
-                        target: 'authenticated',
-                        actions: ({ context, event }) => {
-                            console.log('Token refreshed successfully:', event.output);
-                            applyToken(context, event.output);
-                        }
-                    },
-                    onError: {
-                        target: 'unauthenticated',
-                        actions: ({ context, event }) => {
+                        target: 'idle',
+                        actions: ({context, event}) => {
                             console.error('Error during token refresh:', event.data);
-                            clearAuthData(context);
+                            context.accessToken = null;
+                            context.isAuthenticated = false;
+                            context.isLoaded = true
                         }
                     }
-                }
-            },
-            unauthenticated: {
-                on: {
-                    RETRY: 'checking'
                 }
             }
         }
     });
 
-function applyToken(ctx, token) {
-    ctx.accessToken = token;
-    ctx.isAuthenticated = true;
-
+function applyToken(token) {
     try {
         const decoded = jwtDecode(token);
         console.log('Decoded token:', decoded);
         if (decoded?.scope) {
             const scopes = decoded.scope.split(' ');
-            ctx.isAdmin = scopes.includes('site:admin');
+            return scopes.includes('site:admin');
         } else {
-            ctx.isAdmin = false;
-        }
-        if (decoded?.exp) {
-            ctx.tokenExpiresAt = decoded.exp * 1000;
+            return false;
         }
     } catch (err) {
         console.error('Error decoding JWT', err);
-        ctx.isAdmin = false;
-        ctx.tokenExpiresAt = null;
+        return false;
     }
-}
-
-function clearAuthData(ctx) {
-    console.log('Clearing auth data');
-    ctx.accessToken = null;
-    ctx.isAuthenticated = false;
-    ctx.isAdmin = false;
-    ctx.tokenExpiresAt = null;
 }

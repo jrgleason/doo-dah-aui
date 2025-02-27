@@ -1,5 +1,6 @@
 import './Marketing.css'
-function Marketing(){
+
+function Marketing() {
     return (
         <div className={"wrapper"}>
             <h1>Marketing</h1>

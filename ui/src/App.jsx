@@ -1,13 +1,12 @@
-import {useEffect, useRef, useState} from 'react';
 import './App.css';
 import Marketing from "./pages/marketing/Marketing.jsx";
-import {Auth0Provider, useAuth0} from '@auth0/auth0-react';
+import {Auth0Provider} from '@auth0/auth0-react';
 import {GlobalConfigProvider, useGlobalConfig} from "./providers/config/GlobalConfigContext.jsx";
 import NavBar from "./components/NavBar/NavBar.jsx";
 import MainPage from "./pages/Main/MainPage.jsx";
 import LoadingLayer from "./pages/Loading/LoadingLayer.jsx";
 import {TokenProvider} from "./providers/token/TokenContext.jsx";
-
+import { TokenContext } from "./providers/token/TokenContext.jsx";
 function AppContent() {
     const config = useGlobalConfig();
 
@@ -31,36 +30,26 @@ function AppContent() {
         </Auth0Provider>
     );
 }
+
 function AppContentWithAuth() {
-    const { getAccessTokenSilently } = useAuth0();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoaded, setIsLoaded] = useState(false);
-    const isCheckingAuth = useRef(false);
-    useEffect(() => {
-        const checkAuth = async () => {
-            console.log("Checking the auth");
-            if (isCheckingAuth.current) return;
-            isCheckingAuth.current = true;
-            try {
-                await getAccessTokenSilently();
-                setIsAuthenticated(true);
-            } catch (error) {
-                console.error('Error checking authentication:', error);
-                setIsAuthenticated(false);
-            } finally {
-                setIsLoaded(true);
-            }
-        };
-        checkAuth().catch(console.error);
-    }, []);
+    const actorRef = TokenContext.useActorRef();
+    // Use a simpler selector first to test
+    const isAuthenticated = TokenContext.useSelector(
+        (state) => state.context.isAuthenticated
+    );
+    const isLoaded = TokenContext.useSelector(
+        (state) => state.context.isLoaded
+    );
+    console.log('Is authenticated:', isAuthenticated);
+    console.log('Is loaded:', isLoaded);
 
     return (
         <div className="root-wrapper">
-            <NavBar isAuthenticated={isAuthenticated} isLoaded={isLoaded}/>
+            <NavBar isAuthenticated={isAuthenticated}/>
             <main className="root-main z-0">
-                <NavBar isFixed={false} />
-                {!isLoaded ? <LoadingLayer /> : null}
-                {isAuthenticated ? <MainPage /> : <Marketing />}
+                <NavBar isFixed={false}/>
+                {!isLoaded ? <LoadingLayer/> : null}
+                {isAuthenticated ? <MainPage/> : <Marketing/>}
             </main>
         </div>
     );
