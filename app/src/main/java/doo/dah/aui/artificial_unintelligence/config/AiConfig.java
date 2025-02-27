@@ -36,13 +36,4 @@ public class AiConfig {
                 .defaultOptions(new OpenAiChatOptions())
                 .build();
     }
-
-//    @Bean // function description
-//    @Description("Turn on/off or check the status, by not providing a value, of any device ")
-//    public Function<
-//           .  ToggleFunction.Request,
-//            ToggleFunction.Response
-//            > toggleDevice() {
-//        return new ToggleFunction(deviceStateService);
-//    }
 }

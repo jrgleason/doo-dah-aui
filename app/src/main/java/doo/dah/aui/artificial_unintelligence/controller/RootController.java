@@ -18,4 +18,9 @@ public class RootController {
     public String protectedMeth() {
         return "Super Secret";
     }
+    @GetMapping("/admin")
+    @ResponseBody
+    public String admin() {
+        return "Yup you are an admin";
+    }
 }

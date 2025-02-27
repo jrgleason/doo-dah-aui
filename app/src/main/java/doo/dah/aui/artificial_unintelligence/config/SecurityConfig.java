@@ -12,10 +12,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(
             HttpSecurity http
     ) throws Exception {
-        http.oauth2ResourceServer(
-                oauth2 -> oauth2.jwt(
-                        Customizer.withDefaults()
-                ))
+        http.oauth2ResourceServer(oauth2 -> oauth2
+                        // Tells Spring Security to validate incoming JWT Bearer tokens
+                        .jwt(Customizer.withDefaults())
+                )
                 .authorizeHttpRequests(
                         (authz) ->
                                 authz
@@ -24,6 +24,10 @@ public class SecurityConfig {
                                                 "/chat/**",
                                                 "/config/user"
                                         ).authenticated()
+                                        .requestMatchers(
+                                                "/pinecone/**",
+                                                "/root/admin"
+                                        ).hasAuthority("SCOPE_site:admin")
                                         .anyRequest().permitAll()
                 );
         return http.build();
