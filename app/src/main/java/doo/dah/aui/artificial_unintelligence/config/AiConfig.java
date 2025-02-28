@@ -1,5 +1,7 @@
 package doo.dah.aui.artificial_unintelligence.config;
 
+import doo.dah.aui.artificial_unintelligence.advisors.SQLStorageAdvisor;
+import doo.dah.aui.artificial_unintelligence.repos.UserQuestionRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
@@ -25,12 +27,14 @@ public class AiConfig {
     public ChatClient buildClient(
             ChatClient.Builder openAiBuilder,
             MessageChatMemoryAdvisor messageChatMemoryAdvisor,
-            VectorStore pineconeVectorStore
+            VectorStore pineconeVectorStore,
+            UserQuestionRepository userQuestionRepository
     ) {
         return openAiBuilder
                 .defaultAdvisors(
                         messageChatMemoryAdvisor,
-                        new QuestionAnswerAdvisor(pineconeVectorStore)
+                        new QuestionAnswerAdvisor(pineconeVectorStore),
+                        new SQLStorageAdvisor(userQuestionRepository)
                 )
                 .defaultSystem(instructions)
                 .defaultOptions(new OpenAiChatOptions())
