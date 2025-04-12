@@ -10,6 +10,8 @@ const ContentSubmission = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [url, setUrl] = useState('');
+    const [crawlEntireSite, setCrawlEntireSite] = useState(false);
+    const [crawlDepth, setCrawlDepth] = useState(3);
     const [tags, setTags] = useState([]);
     const [currentTag, setCurrentTag] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +43,8 @@ const ContentSubmission = () => {
         setUrl('');
         setTags([]);
         setCurrentTag('');
+        setCrawlEntireSite(false);
+        setCrawlDepth(3);
     };
 
     const isFormValid = () => {
@@ -94,7 +98,9 @@ const ContentSubmission = () => {
                 const payload = {
                     url: url,
                     title: title,
-                    tags: tags
+                    tags: tags,
+                    crawlEntireSite: crawlEntireSite,
+                    crawlDepth: crawlDepth
                 };
 
                 await axios.post('/pinecone/add-from-url', payload, {
@@ -107,14 +113,16 @@ const ContentSubmission = () => {
 
             setFeedbackMessage({
                 type: 'success',
-                message: 'Your content has been successfully added to the knowledge base!'
+                message: crawlEntireSite
+                    ? 'Site crawl has been started! The content will be processed in the background.'
+                    : 'Your content has been successfully added to the knowledge base!'
             });
             resetForm();
         } catch (error) {
             console.error('Error submitting content:', error);
             setFeedbackMessage({
                 type: 'error',
-                message: `Error: ${error.response?.data?.message || error.message || 'Failed to submit content'}`
+                message: `Error: ${error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to submit content'}`
             });
         } finally {
             setIsSubmitting(false);
@@ -215,9 +223,47 @@ const ContentSubmission = () => {
                                     onChange={(e) => setUrl(e.target.value)}
                                 />
                             </div>
-                            <p className="mt-1 text-sm text-gray-500">
-                                Content will be extracted from this URL and added to the knowledge base.
-                            </p>
+
+                            {/* Crawl entire site option */}
+                            <div className="mt-3">
+                                <div className="flex items-center">
+                                    <input
+                                        id="crawl-entire-site"
+                                        type="checkbox"
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        checked={crawlEntireSite}
+                                        onChange={(e) => setCrawlEntireSite(e.target.checked)}
+                                    />
+                                    <label htmlFor="crawl-entire-site" className="ml-2 text-sm font-medium text-gray-700">
+                                        Crawl entire site
+                                    </label>
+                                </div>
+                                <p className="mt-1 text-sm text-gray-500">
+                                    When enabled, we'll crawl and process all pages linked from this URL.
+                                </p>
+                            </div>
+
+                            {/* Crawl depth slider (only shown when crawl entire site is enabled) */}
+                            {crawlEntireSite && (
+                                <div className="mt-3">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Crawl Depth: {crawlDepth}
+                                    </label>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="5"
+                                        step="1"
+                                        value={crawlDepth}
+                                        onChange={(e) => setCrawlDepth(parseInt(e.target.value))}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                    />
+                                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                        <span>Shallow (faster)</span>
+                                        <span>Deep (thorough)</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -248,7 +294,7 @@ const ContentSubmission = () => {
                             {tags.map((tag, index) => (
                                 <div
                                     key={index}
-                                    className="inline-flex items-center px-2 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                                    className="inline-flex items-center px-2 py-1 rounded-full text-sm bg-blue-100 text-blue-800 tag-item"
                                 >
                                     {tag}
                                     <button
@@ -279,10 +325,14 @@ const ContentSubmission = () => {
                         <div className="flex items-center">
                             <div
                                 className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                            Submitting...
+                            {crawlEntireSite ? 'Starting Crawler...' : 'Submitting...'}
                         </div>
                     ) : (
-                        <span>Submit to Knowledge Base</span>
+                        <span>
+                            {crawlEntireSite
+                                ? 'Start Crawling Site'
+                                : 'Submit to Knowledge Base'}
+                        </span>
                     )}
                 </button>
             </div>

@@ -1,12 +1,11 @@
 import './App.css';
 import Marketing from "./pages/marketing/Marketing.jsx";
-import {Auth0Provider} from '@auth0/auth0-react';
+import {Auth0Provider, useAuth0} from '@auth0/auth0-react';
 import {GlobalConfigProvider, useGlobalConfig} from "./providers/config/GlobalConfigContext.jsx";
 import NavBar from "./components/NavBar/NavBar.jsx";
 import MainPage from "./pages/Main/MainPage.jsx";
 import LoadingLayer from "./pages/Loading/LoadingLayer.jsx";
-import {TokenProvider} from "./providers/token/TokenContext.jsx";
-import { TokenContext } from "./providers/token/TokenContext.jsx";
+import {TokenProvider} from "./providers/token/TokenProvider.jsx";
 function AppContent() {
     const config = useGlobalConfig();
 
@@ -18,6 +17,8 @@ function AppContent() {
         <Auth0Provider
             domain={config.domain}
             clientId={config.clientId}
+            useRefreshTokens={true}
+            cacheLocation={"localstorage"}
             authorizationParams={{
                 redirect_uri: window.location.origin,
                 audience: config.audience,
@@ -32,23 +33,16 @@ function AppContent() {
 }
 
 function AppContentWithAuth() {
-    const actorRef = TokenContext.useActorRef();
-    // Use a simpler selector first to test
-    const isAuthenticated = TokenContext.useSelector(
-        (state) => state.context.isAuthenticated
-    );
-    const isLoaded = TokenContext.useSelector(
-        (state) => state.context.isLoaded
-    );
+    const {isAuthenticated, isLoading} = useAuth0();
     console.log('Is authenticated:', isAuthenticated);
-    console.log('Is loaded:', isLoaded);
+    console.log('Is loaded:', !isLoading);
 
     return (
         <div className="root-wrapper">
             <NavBar isAuthenticated={isAuthenticated}/>
             <main className="root-main z-0">
                 <NavBar isFixed={false}/>
-                {!isLoaded ? <LoadingLayer/> : null}
+                {isLoading ? <LoadingLayer/> : null}
                 {isAuthenticated ? <MainPage/> : <Marketing/>}
             </main>
         </div>
