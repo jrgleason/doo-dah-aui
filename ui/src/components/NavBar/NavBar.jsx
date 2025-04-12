@@ -1,19 +1,17 @@
 import {useAuth0} from "@auth0/auth0-react";
 import {useState} from "react";
 import {FaUser} from 'react-icons/fa';
-import {TokenContext} from "../../providers/token/TokenContext.jsx";
 
 function NavBar({isFixed = true}) {
-    const {loginWithRedirect, logout} = useAuth0();
-    const isAuthenticated = TokenContext.useSelector(
-        (state) => state.context.isAuthenticated
-    );
-    const isLoaded = TokenContext.useSelector(
-        (state) => state.context.isLoaded
-    );
-    const isAdmin = TokenContext.useSelector(
-        (state) => state.context.isAdmin
-    );
+
+    const {loginWithRedirect, logout, isAuthenticated, useSelector, isLoading} = useAuth0();
+
+    // const isAdmin = useSelector(
+    //     (state) => state.context.isAdmin
+    // );
+    // TODO: For now everyone is an admin
+    const isAdmin = true;
+
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
     const toggleDropdown = () => {
@@ -29,7 +27,7 @@ function NavBar({isFixed = true}) {
                     <div className="text-2xl font-bold">🤖</div>
                     <h1 className="text-xl font-bold">Artificial Unintelligence</h1>
                 </div>
-                {isLoaded ? (
+                {!isLoading ? (
                     isAuthenticated ? (
                         <div className="relative">
                             <button
