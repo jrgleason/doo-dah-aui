@@ -9,12 +9,12 @@ const TabNavigation = ({children}) => {
     return (
         <div className="flex flex-col h-full">
             {/* Tab navigation */}
-            <div className="flex border-b border-gray-200 bg-white">
+            <div className="flex border-b border-gray-200 bg-gray-50 px-4 py-2">
                 <button
-                    className={`flex items-center py-3 px-4 ${
+                    className={`flex items-center py-3 px-6 relative mr-2 ${
                         activeTab === 0
-                            ? 'text-blue-600 border-b-2 border-blue-600 font-medium'
-                            : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'text-indigo-700 font-medium bg-white border-t border-l border-r border-gray-200 rounded-t-lg border-b-2 border-b-indigo-600'
+                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
                     }`}
                     onClick={() => setActiveTab(0)}
                 >
@@ -22,10 +22,10 @@ const TabNavigation = ({children}) => {
                     <span>Chat</span>
                 </button>
                 <button
-                    className={`flex items-center py-3 px-4 ${
+                    className={`flex items-center py-3 px-6 relative ${
                         activeTab === 1
-                            ? 'text-blue-600 border-b-2 border-blue-600 font-medium'
-                            : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'text-indigo-700 font-medium bg-white border-t border-l border-r border-gray-200 rounded-t-lg border-b-2 border-b-indigo-600'
+                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
                     }`}
                     onClick={() => setActiveTab(1)}
                 >
@@ -35,7 +35,7 @@ const TabNavigation = ({children}) => {
             </div>
 
             {/* Tab content */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden bg-white border border-gray-200 rounded-b-lg">
                 {tabs.map((tab, index) => (
                     <div
                         key={index}

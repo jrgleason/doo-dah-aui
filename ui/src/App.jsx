@@ -11,7 +11,9 @@ function AppContent() {
     const config = useGlobalConfig();
 
     if (!config) {
-        return <div>Loading...</div>; // Handle loading state
+        return <div className="flex items-center justify-center h-screen">
+            <div className="spinner"></div>
+        </div>; // Handle loading state
     }
 
     return (
@@ -40,11 +42,12 @@ function AppContentWithAuth() {
 
     return (
         <div className="root-wrapper">
-            <NavBar isAuthenticated={isAuthenticated}/>
-            <main className="root-main z-0">
-                <NavBar isFixed={false}/>
+            <NavBar isFixed={true}/>
+            <main className="root-main">
                 {isLoading ? <LoadingLayer/> : null}
-                {isAuthenticated ? <MainPage/> : <Marketing/>}
+                <div className="container mx-auto px-4 py-6 max-w-7xl">
+                    {isAuthenticated ? <MainPage/> : <Marketing/>}
+                </div>
             </main>
         </div>
     );
