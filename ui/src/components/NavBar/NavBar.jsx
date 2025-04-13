@@ -4,15 +4,8 @@ import {FaUser} from 'react-icons/fa';
 import {RiRobot2Line} from 'react-icons/ri';
 
 function NavBar({isFixed = true}) {
-
-    const {loginWithRedirect, logout, isAuthenticated, useSelector, isLoading} = useAuth0();
-
-    // const isAdmin = useSelector(
-    //     (state) => state.context.isAdmin
-    // );
-    // TODO: For now everyone is an admin
-    const isAdmin = true;
-
+    const {loginWithRedirect, logout, isAuthenticated, user, isLoading, getIdTokenClaims } = useAuth0();
+    const isAdmin = user?.["https://doodah.secondave.net/roles"]?.includes("Doo Dah Admin") ?? false;
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
     const toggleDropdown = () => {
@@ -26,7 +19,7 @@ function NavBar({isFixed = true}) {
             <div className="w-full px-6 py-4 flex justify-between items-center max-w-7xl mx-auto">
                 <div className="flex items-center space-x-3">
                     <div className="text-2xl font-bold flex items-center">
-                        <RiRobot2Line className="mr-2 text-indigo-600" size={24} />
+                        <RiRobot2Line className="mr-2 text-indigo-600" size={24}/>
                         <h1 className="text-xl font-bold tracking-tight">Artificial Unintelligence</h1>
                     </div>
                 </div>
@@ -37,21 +30,25 @@ function NavBar({isFixed = true}) {
                                 onClick={toggleDropdown}
                                 className="bg-indigo-600 text-white hover:bg-indigo-700 font-medium py-2 px-4 rounded-full transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center shadow-sm"
                             >
-                                <FaUser className="mr-2" />
-                                <span>Account</span>
+                                <FaUser className="mr-2"/>
+                                <span>{user.nickname || ""}</span>
                             </button>
                             {dropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-20 overflow-hidden border border-gray-100">
+                                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg z-20">
                                     <button
-                                        onClick={() => logout({returnTo: window.location.origin})}
-                                        className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                        onClick={() => logout({
+                                            logoutParams:{
+                                                returnTo: window.location.origin
+                                            }
+                                        })}
+                                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 hover:bg-transparent focus:bg-transparent rounded-none transition-colors"
                                     >
                                         Logout
                                     </button>
                                     {isAdmin && (
                                         <button
                                             onClick={() => console.log('Admin Panel')}
-                                            className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100"
+                                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 hover:bg-transparent focus:bg-transparent rounded-none transition-colors"
                                         >
                                             Admin Panel
                                         </button>
@@ -62,7 +59,7 @@ function NavBar({isFixed = true}) {
                     ) : (
                         <button
                             onClick={() => loginWithRedirect()}
-                            className="bg-indigo-600 text-white hover:bg-indigo-700 font-medium py-2 px-6 rounded-full transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 shadow-sm"
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
                         >
                             Login
                         </button>
