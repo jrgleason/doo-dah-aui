@@ -1,22 +1,31 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Send as SendIcon} from 'lucide-react';
-import axios from 'axios';
 import {useAuth0} from "@auth0/auth0-react";
 import {useGlobalConfig} from "../../providers/config/GlobalConfigContext.jsx";
 import './ChatComponent.css';
 
-const ChatComponent = ({chatId = 'default'}) => {
+const ChatComponent = () => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const {getAccessTokenSilently} = useAuth0();
     const config = useGlobalConfig();
     const messagesEndRef = useRef(null);
+    const eventSourceRef = useRef(null);
 
     // Auto-scroll to bottom when messages update
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // Clean up EventSource on component unmount
+    useEffect(() => {
+        return () => {
+            if (eventSourceRef.current) {
+                eventSourceRef.current.close();
+            }
+        };
+    }, []);
 
     // Ensure each chat component has its own isolated scroll area
     const scrollToBottom = () => {
@@ -48,30 +57,50 @@ const ChatComponent = ({chatId = 'default'}) => {
                 }
             });
 
-            // Add loading message
+            // Add initial AI message with empty content
             setMessages(prev => [...prev, {
                 type: 'ai',
                 content: '',
                 timestamp: new Date()
             }]);
 
-            const res = await axios.post('/chat', userMessage.content, {
+            const response = await fetch('/chat', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'text/plain',
-                    "Authorization": `Bearer ${token}`
-                }
+                    'Authorization': `Bearer ${token}`
+                },
+                body: userMessage.content
             });
 
-            // Replace loading message with actual response
-            setMessages(prev => {
-                const newMessages = [...prev];
-                newMessages[newMessages.length - 1] = {
-                    type: 'ai',
-                    content: res.data,
-                    timestamp: new Date()
-                };
-                return newMessages;
-            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulatedContent = '';
+
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, {stream: true});
+                accumulatedContent += chunk;
+
+                // Update the AI message with the accumulated content
+                setMessages(prev => {
+                    const newMessages = [...prev];
+                    newMessages[newMessages.length - 1] = {
+                        type: 'ai',
+                        content: accumulatedContent,
+                        timestamp: new Date()
+                    };
+                    return newMessages;
+                });
+            }
+
+            setIsLoading(false);
 
         } catch (error) {
             console.error('Error fetching response:', error);
@@ -81,7 +110,6 @@ const ChatComponent = ({chatId = 'default'}) => {
                 content: `Error: ${error.message || 'Failed to get response'}`,
                 timestamp: new Date()
             }]);
-        } finally {
             setIsLoading(false);
         }
     };
@@ -159,15 +187,15 @@ const ChatComponent = ({chatId = 'default'}) => {
             <div className="bg-white border-t border-gray-200 p-4">
                 <div className="flex space-x-2 items-center">
                     <div className="flex-1 bg-gray-100 rounded-full border border-gray-300">
-            <textarea
-                className="w-full bg-transparent px-4 py-2 resize-none rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-                placeholder="Type a message..."
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={handleKeyDown}
-                rows={1}
-                style={{maxHeight: '120px', overflow: 'auto'}}
-            />
+                        <textarea
+                            className="w-full bg-transparent px-4 py-2 resize-none rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+                            placeholder="Type a message..."
+                            value={inputMessage}
+                            onChange={(e) => setInputMessage(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            rows={1}
+                            style={{maxHeight: '120px', overflow: 'auto'}}
+                        />
                     </div>
                     <button
                         onClick={handleSendMessage}

@@ -6,6 +6,7 @@ import NavBar from "./components/NavBar/NavBar.jsx";
 import MainPage from "./pages/Main/MainPage.jsx";
 import LoadingLayer from "./pages/Loading/LoadingLayer.jsx";
 import {TokenProvider} from "./providers/token/TokenProvider.jsx";
+
 function AppContent() {
     const config = useGlobalConfig();
 

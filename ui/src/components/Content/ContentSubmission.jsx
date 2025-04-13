@@ -3,6 +3,7 @@ import {Link as LinkIcon, Plus as PlusIcon, Trash as TrashIcon} from 'lucide-rea
 import axios from 'axios';
 import {useAuth0} from "@auth0/auth0-react";
 import {useGlobalConfig} from "../../providers/config/GlobalConfigContext.jsx";
+import {TokenContext} from "../../providers/token/TokenProvider.jsx";
 import './ContentSubmission.css';
 
 const ContentSubmission = () => {
@@ -18,6 +19,7 @@ const ContentSubmission = () => {
     const [feedbackMessage, setFeedbackMessage] = useState({type: '', message: ''});
     const {getAccessTokenSilently} = useAuth0();
     const config = useGlobalConfig();
+    const isAdmin = TokenContext.useSelector(state => state.context.isAdmin);
 
     const handleAddTag = () => {
         if (currentTag.trim() && !tags.includes(currentTag.trim())) {
@@ -162,16 +164,18 @@ const ContentSubmission = () => {
                         >
                             Direct Content
                         </button>
-                        <button
-                            className={`flex-1 py-2 px-4 text-sm font-medium ${
-                                submissionType === 'url'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                            }`}
-                            onClick={() => setSubmissionType('url')}
-                        >
-                            From URL
-                        </button>
+                        {isAdmin && (
+                            <button
+                                className={`flex-1 py-2 px-4 text-sm font-medium ${
+                                    submissionType === 'url'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                                }`}
+                                onClick={() => setSubmissionType('url')}
+                            >
+                                From URL
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -234,7 +238,8 @@ const ContentSubmission = () => {
                                         checked={crawlEntireSite}
                                         onChange={(e) => setCrawlEntireSite(e.target.checked)}
                                     />
-                                    <label htmlFor="crawl-entire-site" className="ml-2 text-sm font-medium text-gray-700">
+                                    <label htmlFor="crawl-entire-site"
+                                           className="ml-2 text-sm font-medium text-gray-700">
                                         Crawl entire site
                                     </label>
                                 </div>

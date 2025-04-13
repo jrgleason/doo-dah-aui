@@ -30,7 +30,7 @@ public class PineconeService {
         if (text == null) return 0L;
 
         // Use long to prevent integer overflow
-        long charCount = (long) text.length();
+        long charCount = text.length();
 
         // Rough estimation: ~4 chars per token for English text
         return charCount / 4L;
