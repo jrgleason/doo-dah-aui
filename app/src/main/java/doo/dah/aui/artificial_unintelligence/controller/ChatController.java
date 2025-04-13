@@ -1,25 +1,25 @@
 package doo.dah.aui.artificial_unintelligence.controller;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.http.ResponseEntity;
+import doo.dah.aui.artificial_unintelligence.service.ChatService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 
 @RestController
 @RequestMapping("/chat")
-@RequiredArgsConstructor
 public class ChatController {
-    private final ChatClient chatClient;
 
+    private final ChatService chatService;
+
+    public ChatController(ChatService chatService) {
+        this.chatService = chatService;
+    }
+
+    //    @PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @PostMapping
-    public ResponseEntity<String> question(@RequestBody String message) {
-        String responseContent = chatClient.prompt()
-                .user(message)
-                .call()
-                .content();
-        return ResponseEntity.ok(responseContent);
+    public Flux<String> question(@RequestBody String question) {
+        return chatService.streamResponse(question);
     }
 }
