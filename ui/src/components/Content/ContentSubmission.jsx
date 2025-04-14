@@ -3,10 +3,12 @@ import {Link as LinkIcon, Plus as PlusIcon, Trash as TrashIcon} from 'lucide-rea
 import axios from 'axios';
 import {useAuth0} from "@auth0/auth0-react";
 import {useGlobalConfig} from "../../providers/config/GlobalConfigContext.jsx";
-import {TokenContext} from "../../providers/token/TokenProvider.jsx";
 import './ContentSubmission.css';
 
 const ContentSubmission = () => {
+    const { user } = useAuth0();
+
+
     const [submissionType, setSubmissionType] = useState('direct'); // 'direct' or 'url'
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -19,7 +21,7 @@ const ContentSubmission = () => {
     const [feedbackMessage, setFeedbackMessage] = useState({type: '', message: ''});
     const {getAccessTokenSilently} = useAuth0();
     const config = useGlobalConfig();
-    const isAdmin = TokenContext.useSelector(state => state.context.isAdmin);
+    const isAdmin = user?.["https://doodah.secondave.net/roles"]?.includes("Doo Dah Admin") ?? false;
 
     const handleAddTag = () => {
         if (currentTag.trim() && !tags.includes(currentTag.trim())) {

@@ -2,6 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Send as SendIcon} from 'lucide-react';
 import {useAuth0} from "@auth0/auth0-react";
 import {useGlobalConfig} from "../../providers/config/GlobalConfigContext.jsx";
+import ReactMarkdown from 'react-markdown';
 import './ChatComponent.css';
 
 const ChatComponent = () => {
@@ -151,7 +152,9 @@ const ChatComponent = () => {
                                 </div>
                             </div>
                         ) : (
-                            message.content
+                            <ReactMarkdown>
+                                {message.content}
+                            </ReactMarkdown>
                         )}
                     </div>
                     <div className="text-xs mt-1 opacity-70 text-right">
