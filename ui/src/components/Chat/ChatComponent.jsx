@@ -90,6 +90,8 @@ const ChatComponent = () => {
                 const obj = JSON.parse(chunk);
                 obj.forEach((item) => {
                     item.results.forEach((line) => {
+                        const text = line.output.text;
+                        if(text === "<think>" || text === "</think>") return;
                         accumulatedContent += line.output.text;
                     })
                 })
