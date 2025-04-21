@@ -65,7 +65,7 @@ const ChatComponent = () => {
                 timestamp: new Date()
             }]);
 
-            const response = await fetch('/chat', {
+            const response = await fetch('/ollama', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'text/plain',
@@ -87,7 +87,12 @@ const ChatComponent = () => {
                 if (done) break;
 
                 const chunk = decoder.decode(value, {stream: true});
-                accumulatedContent += chunk;
+                const obj = JSON.parse(chunk);
+                obj.forEach((item) => {
+                    item.results.forEach((line) => {
+                        accumulatedContent += line.output.text;
+                    })
+                })
 
                 // Update the AI message with the accumulated content
                 setMessages(prev => {

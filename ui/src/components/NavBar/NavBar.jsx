@@ -34,7 +34,7 @@ function NavBar({isFixed = true}) {
                                 <span>{user.nickname || ""}</span>
                             </button>
                             {dropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg z-20">
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
                                     <button
                                         onClick={() => logout({
                                             logoutParams:{

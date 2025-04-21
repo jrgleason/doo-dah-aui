@@ -69,3 +69,5 @@ build
 app/src/main/resources/static
 *-personal.yml
 *-personal.yaml
+
+database.db

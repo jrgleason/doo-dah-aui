@@ -34,13 +34,11 @@ function AppContent() {
 
 function AppContentWithAuth() {
     const {isAuthenticated, isLoading} = useAuth0();
-    console.log('Is authenticated:', isAuthenticated);
-    console.log('Is loaded:', !isLoading);
-
     return (
         <div className="root-wrapper">
             <NavBar isFixed={true}/>
             <main className="root-main">
+                <NavBar isFixed={false}/>
                 {isLoading ? <LoadingLayer/> : null}
                 <div className="container mx-auto px-4 py-6 max-w-7xl">
                     {isAuthenticated ? <MainPage/> : <Marketing/>}
