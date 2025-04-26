@@ -133,7 +133,7 @@ const ChatComponent = () => {
                 <div
                     className={`rounded-2xl px-4 py-3 max-w-[80%] ${
                         isUser
-                            ? 'bg-blue-500 text-white rounded-tr-none'
+                            ? 'bg-indigo-600 text-white rounded-tr-none'
                             : isError
                                 ? 'bg-red-100 text-red-700 rounded-tl-none'
                                 : 'bg-gray-200 text-gray-800 rounded-tl-none'
@@ -191,7 +191,7 @@ const ChatComponent = () => {
                 <div className="flex space-x-2 items-center">
                     <div className="flex-1 bg-gray-100 rounded-full border border-gray-300">
                         <textarea
-                            className="w-full bg-transparent px-4 py-2 resize-none rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+                            className="w-full bg-transparent px-4 py-2 resize-none rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-800"
                             placeholder="Type a message..."
                             value={inputMessage}
                             onChange={(e) => setInputMessage(e.target.value)}
@@ -205,7 +205,7 @@ const ChatComponent = () => {
                         disabled={!inputMessage.trim() || isLoading}
                         className={`p-3 rounded-full ${
                             inputMessage.trim() && !isLoading
-                                ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                                ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         } transition-colors`}
                     >

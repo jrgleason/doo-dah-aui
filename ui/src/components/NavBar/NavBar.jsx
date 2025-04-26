@@ -3,8 +3,8 @@ import {useState} from "react";
 import {FaUser} from 'react-icons/fa';
 import {RiRobot2Line} from 'react-icons/ri';
 
-function NavBar({isFixed = true}) {
-    const {loginWithRedirect, logout, isAuthenticated, user, isLoading, getIdTokenClaims } = useAuth0();
+function NavBar({isFixed = false}) {
+    const {loginWithRedirect, logout, isAuthenticated, user, isLoading} = useAuth0();
     const isAdmin = user?.["https://doodah.secondave.net/roles"]?.includes("Doo Dah Admin") ?? false;
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -18,9 +18,9 @@ function NavBar({isFixed = true}) {
         <nav className={navClasses}>
             <div className="w-full px-6 py-4 flex justify-between items-center max-w-7xl mx-auto">
                 <div className="flex items-center space-x-3">
-                    <div className="text-2xl font-bold flex items-center">
-                        <RiRobot2Line className="mr-2 text-indigo-600" size={24}/>
-                        <h1 className="text-xl font-bold tracking-tight">Artificial Unintelligence</h1>
+                    <div className="font-bold flex items-center">
+                        <RiRobot2Line className="text-2xl mr-1 sm:mr-2 text-indigo-600" />
+                        <div className="text-sm md:text-2xl font-bold tracking-tight">Artificial Unintelligence</div>
                     </div>
                 </div>
                 {!isLoading ? (
