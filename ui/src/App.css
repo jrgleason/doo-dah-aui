@@ -104,13 +104,13 @@ html, body, #root {
     overflow: auto;
 }
 
-/*.root-wrapper {*/
-/*    display: flex;*/
-/*    flex-direction: column;*/
-/*    height: 100%;*/
-/*    width: 100%;*/
-/*    min-height: 100vh; !* Ensure minimum height *!*/
-/*}*/
+.root-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
@@ -135,11 +135,6 @@ html, body, #root {
 /* Button styles */
 button {
     transition: all 0.2s ease-in-out;
-}
-
-button:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
 }
 
 /* Input styles */
