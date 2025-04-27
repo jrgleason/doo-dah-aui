@@ -4,7 +4,7 @@ import {FaUser} from 'react-icons/fa';
 import {RiRobot2Line} from 'react-icons/ri';
 
 function NavBar({isFixed = true}) {
-    const {loginWithRedirect, logout, isAuthenticated, user, isLoading, getIdTokenClaims } = useAuth0();
+    const {loginWithRedirect, logout, isAuthenticated, user, isLoading, getIdTokenClaims} = useAuth0();
     const isAdmin = user?.["https://doodah.secondave.net/roles"]?.includes("Doo Dah Admin") ?? false;
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -37,7 +37,7 @@ function NavBar({isFixed = true}) {
                                 <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg z-20">
                                     <button
                                         onClick={() => logout({
-                                            logoutParams:{
+                                            logoutParams: {
                                                 returnTo: window.location.origin
                                             }
                                         })}

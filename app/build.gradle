@@ -17,7 +17,7 @@ java {
 node {
     download = false
     nodeProjectDir = file("${project.projectDir}/../ui")
-	npmCommand = System.getenv('NPM_COMMAND') ?: '/usr/local/bin/npm'
+    npmCommand = System.getenv('NPM_COMMAND') ?: '/usr/local/bin/npm'
 }
 
 repositories {

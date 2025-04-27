@@ -6,7 +6,7 @@ import {useGlobalConfig} from "../../providers/config/GlobalConfigContext.jsx";
 import './ContentSubmission.css';
 
 const ContentSubmission = () => {
-    const { user } = useAuth0();
+    const {user} = useAuth0();
 
 
     const [submissionType, setSubmissionType] = useState('direct'); // 'direct' or 'url'
