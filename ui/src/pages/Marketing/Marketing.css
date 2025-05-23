@@ -1,6 +1,18 @@
-.wrapper {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 2rem;
-    text-align: center;
+/* Base container styling */
+.marketing-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: var(--color-propaganda-red, #b92b27);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Hero section styling */
+.hero-section {
+    width: 100%;
+    padding-top: 2rem;
+    display: flex;
+    justify-content: center;
 }

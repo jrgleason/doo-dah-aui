@@ -1,5 +1,5 @@
 import './App.css';
-import Marketing from "./pages/marketing/Marketing.jsx";
+import Marketing from "./pages/Marketing/Marketing.jsx";
 import {Auth0Provider, useAuth0} from '@auth0/auth0-react';
 import {GlobalConfigProvider, useGlobalConfig} from "./providers/config/GlobalConfigContext.jsx";
 import NavBar from "./components/NavBar/NavBar.jsx";
@@ -40,11 +40,9 @@ function AppContentWithAuth() {
     return (
         <div className="root-wrapper">
             <NavBar isFixed={true}/>
-            <main className="root-main">
+            <main className="root-main overflow-auto">
                 {isLoading ? <LoadingLayer/> : null}
-                <div className="container mx-auto px-4 py-6 max-w-7xl">
-                    {isAuthenticated ? <MainPage/> : <Marketing/>}
-                </div>
+                {isAuthenticated ? <MainPage/> : <Marketing/>}
             </main>
         </div>
     );
