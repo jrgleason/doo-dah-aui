@@ -87,18 +87,27 @@ const ChatComponent = () => {
                 if (done) break;
 
                 const chunk = decoder.decode(value, {stream: true});
-                accumulatedContent += chunk;
+                try {
+                    // Parse each chunk as JSON
+                    const jsonChunk = JSON.parse(chunk);
+                    // Extract the text content from the JSON structure
+                    const textContent = jsonChunk.result?.output?.text || '';
+                    accumulatedContent += textContent;
 
-                // Update the AI message with the accumulated content
-                setMessages(prev => {
-                    const newMessages = [...prev];
-                    newMessages[newMessages.length - 1] = {
-                        type: 'ai',
-                        content: accumulatedContent,
-                        timestamp: new Date()
-                    };
-                    return newMessages;
-                });
+                    // Update the AI message with the accumulated content
+                    setMessages(prev => {
+                        const newMessages = [...prev];
+                        newMessages[newMessages.length - 1] = {
+                            type: 'ai',
+                            content: accumulatedContent,
+                            timestamp: new Date()
+                        };
+                        return newMessages;
+                    });
+                } catch (error) {
+                    console.error('Error parsing JSON chunk:', error);
+                    // Continue with the next chunk even if one fails to parse
+                }
             }
 
             setIsLoading(false);

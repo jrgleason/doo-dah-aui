@@ -20,7 +20,7 @@ function NavBar({isFixed = true}) {
                 <div className="flex items-center space-x-3">
                     <div className="text-2xl font-bold flex items-center">
                         <RiRobot2Line className="mr-2 text-indigo-600" size={24}/>
-                        <h1 className="text-xl font-bold tracking-tight">Artificial Unintelligence</h1>
+                        <div className="truncate">Artificial Unintelligence</div>
                     </div>
                 </div>
                 {!isLoading ? (
@@ -28,27 +28,33 @@ function NavBar({isFixed = true}) {
                         <div className="relative">
                             <button
                                 onClick={toggleDropdown}
-                                className="bg-indigo-600 text-white hover:bg-indigo-700 font-medium py-2 px-4 rounded-full transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center shadow-sm"
+                                className="flex align-center items-center"
+                                // className="bg-indigo-600 text-white hover:bg-indigo-700 font-medium py-2 px-4 rounded-full transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center shadow-sm"
                             >
                                 <FaUser className="mr-2"/>
                                 <span>{user.nickname || ""}</span>
                             </button>
                             {dropdownOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg z-20">
+                                <div 
+                                    className="absolute right-0 mt-2 w-48"
+                                    // className="absolute right-0 mt-2 w-48 bg-white shadow-lg z-20"
+                                >
                                     <button
                                         onClick={() => logout({
                                             logoutParams:{
                                                 returnTo: window.location.origin
                                             }
                                         })}
-                                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 hover:bg-transparent focus:bg-transparent rounded-none transition-colors"
+                                        className="w-full my-1"
+                                        // className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 bg-transparent hover:bg-transparent focus:bg-transparent rounded-none transition-colors dark:bg-transparent dark:text-gray-300 dark:hover:text-indigo-400 dark:hover:bg-transparent"
                                     >
                                         Logout
                                     </button>
                                     {isAdmin && (
                                         <button
                                             onClick={() => console.log('Admin Panel')}
-                                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 hover:bg-transparent focus:bg-transparent rounded-none transition-colors"
+                                            className="w-full my-1"
+                                            // className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:text-indigo-600 bg-transparent hover:bg-transparent focus:bg-transparent rounded-none transition-colors dark:bg-transparent dark:text-gray-300 dark:hover:text-indigo-400 dark:hover:bg-transparent"
                                         >
                                             Admin Panel
                                         </button>
@@ -59,7 +65,7 @@ function NavBar({isFixed = true}) {
                     ) : (
                         <button
                             onClick={() => loginWithRedirect()}
-                            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                            // className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
                         >
                             Login
                         </button>

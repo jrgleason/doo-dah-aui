@@ -73,23 +73,3 @@ button:focus-visible {
     outline: 2px solid #6366f1;
     outline-offset: 2px;
 }
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        color: #f3f4f6;
-        background-color: #111827;
-    }
-
-    a:hover {
-        color: #818cf8;
-    }
-
-    button {
-        background-color: #6366f1;
-        color: white;
-    }
-
-    button:hover {
-        background-color: #4f46e5;
-    }
-}
