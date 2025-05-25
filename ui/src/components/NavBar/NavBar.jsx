@@ -11,13 +11,11 @@ function NavBar({isFixed = true}) {
 
     const toggleDropdown = () => {
         setDropdownOpen(!dropdownOpen);
-    };
-
-    const navClasses = '';//`bg-gradient-to-r from-indigo-50 to-blue-50 text-gray-800 border-b border-gray-200 shadow-sm w-full ${isFixed ? 'fixed top-0 z-10' : ''}`;
+    };    const navClasses = `border-b border-gray-200 shadow-sm w-full bg-blue-600 ${isFixed ? 'fixed top-0 z-10' : ''}`;
 
     return (
         <nav className={navClasses}>
-            <div className="w-full px-6 py-4 flex justify-between items-center max-w-7xl mx-auto">
+            <div className="w-full px-6 py-4 flex justify-between items-center max-w-7xl mx-auto text-white">
                 <div className="flex items-center space-x-3">
                     <div className="text-2xl font-bold flex items-center">
                         <RiRobot2Line className="mr-2" size={24}/>
@@ -26,11 +24,9 @@ function NavBar({isFixed = true}) {
                 </div>
                 {!isLoading ? (
                     isAuthenticated ? (
-                        <div className="relative">
-                            <Button
+                        <div className="relative">                            <Button
                                 onClick={toggleDropdown}
-                                className="flex align-center items-center"
-                                // className="bg-indigo-600 text-white hover:bg-indigo-700 font-medium py-2 px-4 rounded-full transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center shadow-sm"
+                                className="flex align-center items-center text-white bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-md"
                             >
                                 <FaUser className="mr-2"/>
                                 <span>{user.nickname || ""}</span>

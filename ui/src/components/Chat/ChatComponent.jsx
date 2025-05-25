@@ -80,34 +80,36 @@ const ChatComponent = () => {
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            let accumulatedContent = '';
-
-            while (true) {
+            let accumulatedContent = '';            while (true) {
                 const {done, value} = await reader.read();
                 if (done) break;
 
                 const chunk = decoder.decode(value, {stream: true});
+                let textContent = '';
+
                 try {
-                    // Parse each chunk as JSON
+                    // Try to parse the chunk as JSON
                     const jsonChunk = JSON.parse(chunk);
                     // Extract the text content from the JSON structure
-                    const textContent = jsonChunk.result?.output?.text || '';
-                    accumulatedContent += textContent;
-
-                    // Update the AI message with the accumulated content
-                    setMessages(prev => {
-                        const newMessages = [...prev];
-                        newMessages[newMessages.length - 1] = {
-                            type: 'ai',
-                            content: accumulatedContent,
-                            timestamp: new Date()
-                        };
-                        return newMessages;
-                    });
+                    textContent = jsonChunk.result?.output?.text || '';
                 } catch (error) {
-                    console.error('Error parsing JSON chunk:', error);
-                    // Continue with the next chunk even if one fails to parse
+                    // If JSON parsing fails, treat the entire chunk as plain text
+                    console.log('Received non-JSON chunk, treating as plain text');
+                    textContent = chunk;
                 }
+                
+                accumulatedContent += textContent;
+
+                // Update the AI message with the accumulated content
+                setMessages(prev => {
+                    const newMessages = [...prev];
+                    newMessages[newMessages.length - 1] = {
+                        type: 'ai',
+                        content: accumulatedContent,
+                        timestamp: new Date()
+                    };
+                    return newMessages;
+                });
             }
 
             setIsLoading(false);
