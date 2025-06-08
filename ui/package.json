@@ -14,6 +14,7 @@
     "@auth0/auth0-react": "latest",
     "@emotion/react": "latest",
     "@emotion/styled": "latest",
+    "@mui/icons-material": "^7.1.1",
     "@mui/material": "latest",
     "@stomp/stompjs": "latest",
     "@xstate/react": "latest",

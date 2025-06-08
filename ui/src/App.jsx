@@ -7,11 +7,10 @@ import MainPage from "./pages/Main/MainPage.jsx";
 import LoadingLayer from "./pages/Loading/LoadingLayer.jsx";
 
 function AppContent() {
-    const config = useGlobalConfig();
-
-    if (!config) {
-        return <div className="flex items-center justify-center h-screen">
-            <div className="spinner"></div>
+    const config = useGlobalConfig();    if (!config) {
+        return <div className="flex items-center justify-center h-screen bg-surface-900">
+            <div
+                className="w-[50px] h-[50px] border-4 border-surface-600 border-t-brand-500 rounded-full animate-spin"></div>
         </div>; // Handle loading state
     }
 
@@ -35,10 +34,10 @@ function AppContent() {
 function AppContentWithAuth() {
     const {isAuthenticated, isLoading} = useAuth0();
     console.log('Is authenticated:', isAuthenticated);
-    console.log('Is loaded:', !isLoading);    return (
-        <div className="root-wrapper bg-surface-50">
+    console.log('Is loaded:', !isLoading);
+    return (<div className="h-full w-full flex flex-col bg-surface-900">
             <NavBar isFixed={true}/>
-            <main className="root-main overflow-auto bg-surface-50">
+            <main className="h-full w-full bg-surface-900 overflow-auto">
                 <NavBar isFixed={false}/>
                 {isLoading ? <LoadingLayer/> : null}
                 {isAuthenticated ? <MainPage/> : <Marketing/>}

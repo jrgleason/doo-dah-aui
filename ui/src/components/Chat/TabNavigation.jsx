@@ -7,12 +7,12 @@ const TabNavigation = ({children}) => {
     const tabs = React.Children.toArray(children);    return (
         <div className="flex flex-col h-full">
             {/* Tab navigation */}
-            <div className="flex border-b border-surface bg-surface-bg px-4 py-2">
+            <div className="flex border-b border-surface-600 bg-surface-700 px-4 py-2">
                 <button
                     className={`flex items-center py-3 px-6 relative mr-2 transition-colors ${
                         activeTab === 0
-                            ? 'text-brand-light font-medium bg-surface border-t border-l border-r border-surface rounded-t-lg border-b-2 border-b-brand'
-                            : 'text-muted hover:text-primary hover:bg-surface-light'
+                            ? 'text-white font-medium bg-surface-800 border-t border-l border-r border-surface-600 rounded-t-lg border-b-2 border-b-brand-500'
+                            : 'text-surface-300 hover:text-white hover:bg-surface-600'
                     }`}
                     onClick={() => setActiveTab(0)}
                 >
@@ -22,8 +22,8 @@ const TabNavigation = ({children}) => {
                 <button
                     className={`flex items-center py-3 px-6 relative transition-colors ${
                         activeTab === 1
-                            ? 'text-brand-light font-medium bg-surface border-t border-l border-r border-surface rounded-t-lg border-b-2 border-b-brand'
-                            : 'text-muted hover:text-primary hover:bg-surface-light'
+                            ? 'text-white font-medium bg-surface-800 border-t border-l border-r border-surface-600 rounded-t-lg border-b-2 border-b-brand-500'
+                            : 'text-surface-300 hover:text-white hover:bg-surface-600'
                     }`}
                     onClick={() => setActiveTab(1)}
                 >
@@ -33,7 +33,7 @@ const TabNavigation = ({children}) => {
             </div>
 
             {/* Tab content */}
-            <div className="flex-1 overflow-hidden bg-surface-dark border border-surface rounded-b-lg">
+            <div className="flex-1 overflow-hidden bg-surface-800 border border-surface-600 rounded-b-lg">
                 {tabs.map((tab, index) => (
                     <div
                         key={index}

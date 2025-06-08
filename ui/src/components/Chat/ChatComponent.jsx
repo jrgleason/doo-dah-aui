@@ -79,7 +79,8 @@ const ChatComponent = () => {
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-            let accumulatedContent = '';            while (true) {
+            let accumulatedContent = '';
+            while (true) {
                 const {done, value} = await reader.read();
                 if (done) break;
 
@@ -96,7 +97,7 @@ const ChatComponent = () => {
                     console.log('Received non-JSON chunk, treating as plain text');
                     textContent = chunk;
                 }
-                
+
                 accumulatedContent += textContent;
 
                 // Update the AI message with the accumulated content
@@ -134,25 +135,23 @@ const ChatComponent = () => {
     const MessageBubble = ({message}) => {
         const isUser = message.type === 'user';
         const isError = message.type === 'error';
-        const isEmpty = !message.content && message.type === 'ai';
-
-        return (
+        const isEmpty = !message.content && message.type === 'ai';        return (
             <div className={`flex mb-4 ${
-                isUser ? 'justify-end' : 
-                isError ? 'justify-center' : 'justify-start'
+                isUser ? 'justify-end' :
+                    isError ? 'justify-center' : 'justify-start'
             }`}>
                 <div
                     className={`max-w-3xl p-4 rounded-2xl shadow-lg ${
                         isUser
-                            ? 'bg-brand text-white rounded-br-md'
+                            ? 'bg-brand-600 text-white rounded-br-md'
                             : isError
-                                ? 'bg-danger text-white rounded-md'
-                                : 'bg-surface text-primary rounded-bl-md border-l-4 border-brand'
+                                ? 'bg-danger-600 text-white rounded-md'
+                                : 'bg-surface-700 text-white rounded-bl-md border-l-4 border-brand-500'
                     }`}
                 >
                     {!isError && (
                         <div className={`text-xs mb-2 font-medium ${
-                            isUser ? 'text-primary' : 'text-muted'
+                            isUser ? 'text-brand-100' : 'text-surface-300'
                         }`}>
                             {isUser ? 'You' : 'Assistant'}
                         </div>
@@ -160,12 +159,12 @@ const ChatComponent = () => {
                     <div className="whitespace-pre-wrap break-words leading-relaxed">
                         {isEmpty ? (
                             <div className="flex items-center space-x-2">
-                                <div className="w-2 h-2 bg-brand rounded-full animate-pulse"></div>
-                                <div className="w-2 h-2 bg-brand rounded-full animate-pulse"
+                                <div className="w-2 h-2 bg-brand-400 rounded-full animate-pulse"></div>
+                                <div className="w-2 h-2 bg-brand-400 rounded-full animate-pulse"
                                      style={{animationDelay: '0.2s'}}></div>
-                                <div className="w-2 h-2 bg-brand rounded-full animate-pulse"
+                                <div className="w-2 h-2 bg-brand-400 rounded-full animate-pulse"
                                      style={{animationDelay: '0.4s'}}></div>
-                                <span className="text-muted text-sm ml-2">Thinking...</span>
+                                <span className="text-surface-300 text-sm ml-2">Thinking...</span>
                             </div>
                         ) : (
                             <ReactMarkdown>
@@ -179,17 +178,16 @@ const ChatComponent = () => {
                 </div>
             </div>
         );
-    };return (
-        <div className="flex flex-col h-full bg-surface-dark text-primary overflow-hidden">
+    };
+    return (
+        <div className="flex flex-col h-full bg-surface-800 text-white overflow-hidden">
             {/* Chat header */}
-            <div className="bg-surface-bg border-b border-surface px-4 py-3">
-                <h1 className="text-lg font-semibold text-center text-brand-light">Chat with AI</h1>
-            </div>
-
-            {/* Messages container */}
+            <div className="bg-surface-700 border-b border-surface-600 px-4 py-3">
+                <h1 className="text-lg font-semibold text-center text-white">Chat with AI</h1>
+            </div>            {/* Messages container */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{scrollbarWidth: 'thin'}}>
                 {messages.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-center text-muted">
+                    <div className="flex items-center justify-center h-full text-center text-surface-300">
                         <div>
                             <p className="text-xl mb-2">Welcome to Chat</p>
                             <p>Start a conversation with your AI assistant</p>
@@ -204,10 +202,10 @@ const ChatComponent = () => {
             </div>
 
             {/* Input area */}
-            <div className="bg-surface-bg border-t border-surface p-4">
+            <div className="bg-surface-700 border-t border-surface-600 p-4">
                 <div className="flex gap-3">
                     <textarea
-                        className="flex-1 bg-surface text-primary rounded-lg px-4 py-2 border border-surface placeholder-muted focus:border-brand focus:outline-none resize-none"
+                        className="flex-1 bg-surface-600 text-white rounded-lg px-4 py-2 border border-surface-500 placeholder-surface-300 focus:border-brand-500 focus:outline-none resize-none"
                         placeholder="Type a message..."
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
@@ -218,7 +216,7 @@ const ChatComponent = () => {
                     <button
                         onClick={handleSendMessage}
                         disabled={!inputMessage.trim() || isLoading}
-                        className={`bg-brand hover:bg-brand-hover disabled:bg-surface rounded-lg px-6 py-2 text-primary font-medium transition-colors ${
+                        className={`bg-brand-500 hover:bg-brand-600 disabled:bg-surface-500 rounded-lg px-6 py-2 text-white font-medium transition-colors ${
                             !inputMessage.trim() || isLoading ? 'cursor-not-allowed opacity-50' : ''
                         }`}
                     >
