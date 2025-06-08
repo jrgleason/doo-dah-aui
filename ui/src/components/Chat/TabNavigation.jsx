@@ -4,7 +4,8 @@ import {Database, MessageSquare} from 'lucide-react';
 const TabNavigation = ({children}) => {
     const [activeTab, setActiveTab] = useState(0);
 
-    const tabs = React.Children.toArray(children);    return (
+    const tabs = React.Children.toArray(children);
+    return (
         <div className="flex flex-col h-full">
             {/* Tab navigation */}
             <div className="flex border-b border-surface-600 bg-surface-700 px-4 py-2">
@@ -30,14 +31,12 @@ const TabNavigation = ({children}) => {
                     <Database size={18} className="mr-2"/>
                     <span>Add Knowledge</span>
                 </button>
-            </div>
-
-            {/* Tab content */}
-            <div className="flex-1 overflow-hidden bg-surface-800 border border-surface-600 rounded-b-lg">
+            </div>            {/* Tab content */}
+            <div className="flex-1 bg-surface-800 border border-surface-600 rounded-b-lg min-h-0">
                 {tabs.map((tab, index) => (
                     <div
                         key={index}
-                        className={`h-full ${activeTab === index ? 'block' : 'hidden'}`}
+                        className={`h-full min-h-0 ${activeTab === index ? 'block' : 'hidden'}`}
                     >
                         {tab}
                     </div>

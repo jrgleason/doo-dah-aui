@@ -1,16 +1,7 @@
 import {useAuth0} from "@auth0/auth0-react";
 import {useState} from "react";
 import {RiRobot2Line} from 'react-icons/ri';
-import {
-    AppBar,
-    Toolbar,
-    Typography,
-    Button,
-    IconButton,
-    Menu,
-    MenuItem,
-    Avatar
-} from "@mui/material";
+import {AppBar, Button, IconButton, Menu, MenuItem, Toolbar, Typography} from "@mui/material";
 import {AccountCircle} from "@mui/icons-material";
 
 function NavBar({isFixed = true}) {
@@ -33,21 +24,22 @@ function NavBar({isFixed = true}) {
                 returnTo: window.location.origin
             }
         });
-    };    return (
-        <AppBar 
-            position={isFixed ? "fixed" : "static"} 
-            sx={{ 
+    };
+    return (
+        <AppBar
+            position={isFixed ? "fixed" : "static"}
+            sx={{
                 bgcolor: '#1e293b', // surface-800
                 color: 'white',
                 borderBottom: '1px solid #475569' // surface-600
             }}
         >
             <Toolbar>
-                <RiRobot2Line size={24} style={{ marginRight: 8, color: '#14b8a6' }} /> {/* brand-500 */}
-                <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: 'white' }}>
+                <RiRobot2Line size={24} style={{marginRight: 8, color: '#14b8a6'}}/> {/* brand-500 */}
+                <Typography variant="h6" component="div" sx={{flexGrow: 1, fontWeight: 'bold', color: 'white'}}>
                     Artificial Unintelligence
                 </Typography>
-                
+
                 {!isLoading && (
                     isAuthenticated ? (
                         <>
@@ -55,9 +47,9 @@ function NavBar({isFixed = true}) {
                                 size="large"
                                 edge="end"
                                 onClick={handleMenuOpen}
-                                sx={{ color: 'white' }}
+                                sx={{color: 'white'}}
                             >
-                                <AccountCircle />
+                                <AccountCircle/>
                             </IconButton>
                             <Menu
                                 anchorEl={anchorEl}
@@ -79,9 +71,9 @@ function NavBar({isFixed = true}) {
                                     }
                                 }}
                             >
-                                <MenuItem 
+                                <MenuItem
                                     onClick={handleLogout}
-                                    sx={{ 
+                                    sx={{
                                         color: 'white',
                                         '&:hover': {
                                             bgcolor: '#475569' // surface-600
@@ -91,9 +83,9 @@ function NavBar({isFixed = true}) {
                                     Logout
                                 </MenuItem>
                                 {isAdmin && (
-                                    <MenuItem 
+                                    <MenuItem
                                         onClick={() => console.log('Admin Panel')}
-                                        sx={{ 
+                                        sx={{
                                             color: 'white',
                                             '&:hover': {
                                                 bgcolor: '#475569' // surface-600
@@ -106,7 +98,7 @@ function NavBar({isFixed = true}) {
                             </Menu>
                         </>
                     ) : (
-                        <Button 
+                        <Button
                             variant="contained"
                             onClick={() => loginWithRedirect()}
                             sx={{

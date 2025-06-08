@@ -15,7 +15,7 @@
     --color-brand-800: #115e59;
     --color-brand-900: #134e4a;
     --color-brand-950: #042f2e;
-    
+
     /* Surface/Neutral colors - creates bg-surface-*, text-surface-*, etc. */
     --color-surface-50: #f8fafc;
     --color-surface-100: #f1f5f9;
@@ -28,25 +28,25 @@
     --color-surface-800: #1e293b;
     --color-surface-900: #0f172a;
     --color-surface-950: #020617;
-    
+
     /* Text colors - creates text-primary, text-secondary, etc. */
     --color-primary: #ffffff;
     --color-secondary: #cbd5e1;
     --color-muted: #94a3b8;
     --color-lighter: #64748b;
-    
+
     /* Warning colors */
     --color-warning-50: #fff7ed;
     --color-warning-400: #fb923c;
     --color-warning-600: #ea580c;
     --color-warning-700: #c2410c;
-    
+
     /* Danger colors */
     --color-danger-50: #fef2f2;
     --color-danger-600: #dc2626;
     --color-danger-700: #b91c1c;
     --color-danger-900: #7f1d1d;
-    
+
     /* Custom font family */
     --font-inter: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }

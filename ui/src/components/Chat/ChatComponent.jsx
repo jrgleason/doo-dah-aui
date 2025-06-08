@@ -135,13 +135,14 @@ const ChatComponent = () => {
     const MessageBubble = ({message}) => {
         const isUser = message.type === 'user';
         const isError = message.type === 'error';
-        const isEmpty = !message.content && message.type === 'ai';        return (
+        const isEmpty = !message.content && message.type === 'ai';
+        return (
             <div className={`flex mb-4 ${
                 isUser ? 'justify-end' :
                     isError ? 'justify-center' : 'justify-start'
             }`}>
                 <div
-                    className={`max-w-3xl p-4 rounded-2xl shadow-lg ${
+                    className={`max-w-3xl sm:max-w-3xl max-w-[85%] p-4 rounded-2xl shadow-lg ${
                         isUser
                             ? 'bg-brand-600 text-white rounded-br-md'
                             : isError
@@ -184,8 +185,9 @@ const ChatComponent = () => {
             {/* Chat header */}
             <div className="bg-surface-700 border-b border-surface-600 px-4 py-3">
                 <h1 className="text-lg font-semibold text-center text-white">Chat with AI</h1>
-            </div>            {/* Messages container */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{scrollbarWidth: 'thin'}}>
+            </div>
+            {/* Messages container */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" style={{scrollbarWidth: 'thin'}}>
                 {messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full text-center text-surface-300">
                         <div>
@@ -200,12 +202,11 @@ const ChatComponent = () => {
                 )}
                 <div ref={messagesEndRef}/>
             </div>
-
             {/* Input area */}
-            <div className="bg-surface-700 border-t border-surface-600 p-4">
-                <div className="flex gap-3">
+            <div className="bg-surface-700 border-t border-surface-600 p-4 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row gap-3">
                     <textarea
-                        className="flex-1 bg-surface-600 text-white rounded-lg px-4 py-2 border border-surface-500 placeholder-surface-300 focus:border-brand-500 focus:outline-none resize-none"
+                        className="flex-1 bg-surface-600 text-white rounded-lg px-4 py-2 border border-surface-500 placeholder-surface-300 focus:border-brand-500 focus:outline-none resize-none min-h-[40px]"
                         placeholder="Type a message..."
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
@@ -216,11 +217,12 @@ const ChatComponent = () => {
                     <button
                         onClick={handleSendMessage}
                         disabled={!inputMessage.trim() || isLoading}
-                        className={`bg-brand-500 hover:bg-brand-600 disabled:bg-surface-500 rounded-lg px-6 py-2 text-white font-medium transition-colors ${
+                        className={`bg-brand-500 hover:bg-brand-600 disabled:bg-surface-500 rounded-lg px-6 py-2 text-white font-medium transition-colors flex items-center justify-center sm:w-auto w-full ${
                             !inputMessage.trim() || isLoading ? 'cursor-not-allowed opacity-50' : ''
                         }`}
                     >
                         <SendIcon size={20}/>
+                        <span className="sm:hidden ml-2">Send</span>
                     </button>
                 </div>
             </div>
