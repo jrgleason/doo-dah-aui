@@ -1,140 +1,174 @@
-/*!* Chat component animations *!*/
-/*@keyframes fadeIn {*/
-/*    from {*/
-/*        opacity: 0;*/
-/*        transform: translateY(10px);*/
-/*    }*/
-/*    to {*/
-/*        opacity: 1;*/
-/*        transform: translateY(0);*/
-/*    }*/
-/*}*/
+/* Dark theme color system inspired by the reference design */
+:root {
+    /* Brand colors */
+    --brand: #14b8a6; /* teal-500 */
+    --brand-hover: #0d9488; /* teal-600 */
+    --brand-light: #2dd4bf; /* teal-400 */
+    --brand-dark: #0f766e; /* teal-700 */
 
-/*.message-bubble {*/
-/*    animation: fadeIn 0.3s ease-out forwards;*/
-/*}*/
+    /* Surface/Neutral colors */
+    --surface: #334155; /* slate-600 */
+    --surface-light: #475569; /* slate-500 */
+    --surface-lighter: #64748b; /* slate-400 */
+    --surface-bg: #1e293b; /* slate-800 */
+    --surface-dark: #0f172a; /* slate-900 */
+    --surface-darker: #020617; /* slate-950 */
 
-/*!* Typing indicator animation *!*/
-/*@keyframes typingBounce {*/
-/*    0%, 60%, 100% {*/
-/*        transform: translateY(0);*/
-/*    }*/
-/*    30% {*/
-/*        transform: translateY(-4px);*/
-/*    }*/
-/*}*/
+    /* Warning colors */
+    --warning: #fb923c; /* orange-400 */
+    --warning-hover: #ea580c; /* orange-600 */
+    --warning-dark: #c2410c; /* orange-700 */
 
-/*.typing-indicator > div {*/
-/*    animation: typingBounce 1.4s infinite ease-in-out;*/
-/*}*/
+    /* Danger colors */
+    --danger: #dc2626; /* red-600 */
+    --danger-hover: #b91c1c; /* red-700 */
 
-/*!* Smooth transitions for hover effects *!*/
-/*.chat-input {*/
-/*    transition: all 0.2s ease-in-out;*/
-/*}*/
+    /* Text colors */
+    --text-primary: #ffffff; /* white */
+    --text-secondary: #cbd5e1; /* slate-300 */
+    --text-muted: #94a3b8; /* slate-400 */
+    --text-lighter: #64748b; /* slate-500 */
+}
 
-/*.chat-input:focus-within {*/
-/*    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);*/
-/*}*/
+/* Custom utility classes for our color system */
+.bg-brand {
+    background-color: var(--brand);
+}
 
-/*!* Message timestamp fade-in *!*/
-/*.message-timestamp {*/
-/*    opacity: 0;*/
-/*    transition: opacity 0.3s ease-in-out;*/
-/*}*/
+.bg-brand-hover {
+    background-color: var(--brand-hover);
+}
 
-/*.message-bubble:hover .message-timestamp {*/
-/*    opacity: 0.7;*/
-/*}*/
+.bg-brand-light {
+    background-color: var(--brand-light);
+}
 
-/*!* Send button pulse animation *!*/
-/*@keyframes pulse {*/
-/*    0% {*/
-/*        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);*/
-/*    }*/
-/*    70% {*/
-/*        box-shadow: 0 0 0 6px rgba(99, 102, 241, 0);*/
-/*    }*/
-/*    100% {*/
-/*        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);*/
-/*    }*/
-/*}*/
+.bg-brand-dark {
+    background-color: var(--brand-dark);
+}
 
-/*.send-button:not(:disabled) {*/
-/*    animation: pulse 2s infinite;*/
-/*}*/
+.bg-surface {
+    background-color: var(--surface);
+}
 
-/*!* Empty state animation *!*/
-/*@keyframes float {*/
-/*    0% {*/
-/*        transform: translateY(0px);*/
-/*    }*/
-/*    50% {*/
-/*        transform: translateY(-10px);*/
-/*    }*/
-/*    100% {*/
-/*        transform: translateY(0px);*/
-/*    }*/
-/*}*/
+.bg-surface-light {
+    background-color: var(--surface-light);
+}
 
-/*.empty-state-icon {*/
-/*    animation: float 3s ease-in-out infinite;*/
-/*}*/
+.bg-surface-lighter {
+    background-color: var(--surface-lighter);
+}
 
-/*!* Markdown styling *!*/
-/*.message-bubble a {*/
-/*    color: #3b82f6;*/
-/*    text-decoration: underline;*/
-/*}*/
+.bg-surface-bg {
+    background-color: var(--surface-bg);
+}
 
-/*.message-bubble a:hover {*/
-/*    text-decoration: none;*/
-/*}*/
+.bg-surface-dark {
+    background-color: var(--surface-dark);
+}
 
-/*.message-bubble code {*/
-/*    background-color: rgba(0, 0, 0, 0.05);*/
-/*    padding: 0.2em 0.4em;*/
-/*    border-radius: 3px;*/
-/*    font-family: monospace;*/
-/*    font-size: 0.9em;*/
-/*}*/
+.bg-surface-darker {
+    background-color: var(--surface-darker);
+}
 
-/*.message-bubble pre {*/
-/*    background-color: rgba(0, 0, 0, 0.05);*/
-/*    padding: 1em;*/
-/*    border-radius: 5px;*/
-/*    overflow-x: auto;*/
-/*}*/
+.bg-warning {
+    background-color: var(--warning);
+}
 
-/*.message-bubble pre code {*/
-/*    background-color: transparent;*/
-/*    padding: 0;*/
-/*}*/
+.bg-warning-hover {
+    background-color: var(--warning-hover);
+}
 
-/*.message-bubble ul, .message-bubble ol {*/
-/*    padding-left: 1.5em;*/
-/*    margin: 0.5em 0;*/
-/*}*/
+.bg-warning-dark {
+    background-color: var(--warning-dark);
+}
 
-/*.message-bubble blockquote {*/
-/*    border-left: 3px solid #e5e7eb;*/
-/*    padding-left: 1em;*/
-/*    margin: 0.5em 0;*/
-/*    color: #6b7280;*/
-/*}*/
+.bg-danger {
+    background-color: var(--danger);
+}
 
-/*.message-bubble table {*/
-/*    border-collapse: collapse;*/
-/*    width: 100%;*/
-/*    margin: 0.5em 0;*/
-/*}*/
+.bg-danger-hover {
+    background-color: var(--danger-hover);
+}
 
-/*.message-bubble th, .message-bubble td {*/
-/*    border: 1px solid #e5e7eb;*/
-/*    padding: 0.5em;*/
-/*    text-align: left;*/
-/*}*/
+.text-brand {
+    color: var(--brand);
+}
 
-/*.message-bubble th {*/
-/*    background-color: rgba(0, 0, 0, 0.05);*/
-/*}*/
+.text-brand-light {
+    color: var(--brand-light);
+}
+
+.text-primary {
+    color: var(--text-primary);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-lighter {
+    color: var(--text-lighter);
+}
+
+.text-warning {
+    color: var(--warning);
+}
+
+.text-danger {
+    color: var(--danger);
+}
+
+.border-brand {
+    border-color: var(--brand);
+}
+
+.border-brand-light {
+    border-color: var(--brand-light);
+}
+
+.border-surface {
+    border-color: var(--surface);
+}
+
+.border-surface-light {
+    border-color: var(--surface-light);
+}
+
+.placeholder-muted::placeholder {
+    color: var(--text-muted);
+}
+
+/* Hover states */
+.hover\:bg-brand-hover:hover {
+    background-color: var(--brand-hover);
+}
+
+.hover\:bg-surface-light:hover {
+    background-color: var(--surface-light);
+}
+
+.hover\:bg-warning-hover:hover {
+    background-color: var(--warning-hover);
+}
+
+.hover\:bg-danger-hover:hover {
+    background-color: var(--danger-hover);
+}
+
+.hover\:text-primary:hover {
+    color: var(--text-primary);
+}
+
+/* Focus states */
+.focus\:border-brand:focus {
+    border-color: var(--brand);
+}
+
+.focus\:outline-none:focus {
+    outline: none;
+}

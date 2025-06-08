@@ -44,8 +44,8 @@
 .spinner {
     width: 50px;
     height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid var(--primary-color);
+    border: 5px solid var(--surface-200);
+    border-top: 5px solid var(--brand-500);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -87,17 +87,17 @@ html, body, #root {
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--surface-100);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: var(--surface-300);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: var(--surface-400);
 }
 
 /* Button styles */
@@ -107,7 +107,7 @@ button {
 
 button:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.3);
 }
 
 /* Input styles */
@@ -117,5 +117,5 @@ input, textarea {
 
 input:focus, textarea:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.3);
 }

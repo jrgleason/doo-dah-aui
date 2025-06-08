@@ -3,7 +3,6 @@ import {Send as SendIcon} from 'lucide-react';
 import {useAuth0} from "@auth0/auth0-react";
 import {useGlobalConfig} from "../../providers/config/GlobalConfigContext.jsx";
 import ReactMarkdown from 'react-markdown';
-import './ChatComponent.css';
 
 const ChatComponent = () => {
     const [messages, setMessages] = useState([]);
@@ -131,36 +130,42 @@ const ChatComponent = () => {
             e.preventDefault();
             handleSendMessage();
         }
-    };
-
-    // Message bubble component
+    };    // Message bubble component
     const MessageBubble = ({message}) => {
         const isUser = message.type === 'user';
         const isError = message.type === 'error';
         const isEmpty = !message.content && message.type === 'ai';
 
         return (
-            <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
+            <div className={`flex mb-4 ${
+                isUser ? 'justify-end' : 
+                isError ? 'justify-center' : 'justify-start'
+            }`}>
                 <div
-                    className={`rounded-2xl px-4 py-3 max-w-[80%] ${
+                    className={`max-w-3xl p-4 rounded-2xl shadow-lg ${
                         isUser
-                            ? 'bg-blue-500 text-white rounded-tr-none'
+                            ? 'bg-brand text-white rounded-br-md'
                             : isError
-                                ? 'bg-red-100 text-red-700 rounded-tl-none'
-                                : 'bg-gray-200 text-gray-800 rounded-tl-none'
+                                ? 'bg-danger text-white rounded-md'
+                                : 'bg-surface text-primary rounded-bl-md border-l-4 border-brand'
                     }`}
                 >
-                    <div className="whitespace-pre-wrap">
+                    {!isError && (
+                        <div className={`text-xs mb-2 font-medium ${
+                            isUser ? 'text-primary' : 'text-muted'
+                        }`}>
+                            {isUser ? 'You' : 'Assistant'}
+                        </div>
+                    )}
+                    <div className="whitespace-pre-wrap break-words leading-relaxed">
                         {isEmpty ? (
-                            <div className="flex justify-center w-full py-2">
-                                <div className="flex space-x-1">
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                         style={{animationDelay: '0ms'}}></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                         style={{animationDelay: '150ms'}}></div>
-                                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                         style={{animationDelay: '300ms'}}></div>
-                                </div>
+                            <div className="flex items-center space-x-2">
+                                <div className="w-2 h-2 bg-brand rounded-full animate-pulse"></div>
+                                <div className="w-2 h-2 bg-brand rounded-full animate-pulse"
+                                     style={{animationDelay: '0.2s'}}></div>
+                                <div className="w-2 h-2 bg-brand rounded-full animate-pulse"
+                                     style={{animationDelay: '0.4s'}}></div>
+                                <span className="text-muted text-sm ml-2">Thinking...</span>
                             </div>
                         ) : (
                             <ReactMarkdown>
@@ -174,20 +179,21 @@ const ChatComponent = () => {
                 </div>
             </div>
         );
-    };
-
-    return (
-        <div className="flex flex-col h-full bg-gray-100 rounded-lg shadow-md overflow-hidden">
+    };return (
+        <div className="flex flex-col h-full bg-surface-dark text-primary overflow-hidden">
             {/* Chat header */}
-            <div className="bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
-                <h1 className="text-lg font-semibold text-center">Chat with AI</h1>
+            <div className="bg-surface-bg border-b border-surface px-4 py-3">
+                <h1 className="text-lg font-semibold text-center text-brand-light">Chat with AI</h1>
             </div>
 
-            {/* Messages container - each chat window has its own scrollable area */}
-            <div className="flex-1 overflow-y-auto p-4" style={{scrollbarWidth: 'thin'}}>
+            {/* Messages container */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{scrollbarWidth: 'thin'}}>
                 {messages.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                        Send a message to start the conversation
+                    <div className="flex items-center justify-center h-full text-center text-muted">
+                        <div>
+                            <p className="text-xl mb-2">Welcome to Chat</p>
+                            <p>Start a conversation with your AI assistant</p>
+                        </div>
                     </div>
                 ) : (
                     messages.map((msg, index) => (
@@ -198,27 +204,23 @@ const ChatComponent = () => {
             </div>
 
             {/* Input area */}
-            <div className="bg-white border-t border-gray-200 p-4">
-                <div className="flex space-x-2 items-center">
-                    <div className="flex-1 bg-gray-100 rounded-full border border-gray-300">
-                        <textarea
-                            className="w-full bg-transparent px-4 py-2 resize-none rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-                            placeholder="Type a message..."
-                            value={inputMessage}
-                            onChange={(e) => setInputMessage(e.target.value)}
-                            onKeyDown={handleKeyDown}
-                            rows={1}
-                            style={{maxHeight: '120px', overflow: 'auto'}}
-                        />
-                    </div>
+            <div className="bg-surface-bg border-t border-surface p-4">
+                <div className="flex gap-3">
+                    <textarea
+                        className="flex-1 bg-surface text-primary rounded-lg px-4 py-2 border border-surface placeholder-muted focus:border-brand focus:outline-none resize-none"
+                        placeholder="Type a message..."
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        rows={1}
+                        style={{maxHeight: '120px', overflow: 'auto'}}
+                    />
                     <button
                         onClick={handleSendMessage}
                         disabled={!inputMessage.trim() || isLoading}
-                        className={`p-3 rounded-full ${
-                            inputMessage.trim() && !isLoading
-                                ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        } transition-colors`}
+                        className={`bg-brand hover:bg-brand-hover disabled:bg-surface rounded-lg px-6 py-2 text-primary font-medium transition-colors ${
+                            !inputMessage.trim() || isLoading ? 'cursor-not-allowed opacity-50' : ''
+                        }`}
                     >
                         <SendIcon size={20}/>
                     </button>

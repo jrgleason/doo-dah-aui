@@ -4,17 +4,15 @@ import {Database, MessageSquare} from 'lucide-react';
 const TabNavigation = ({children}) => {
     const [activeTab, setActiveTab] = useState(0);
 
-    const tabs = React.Children.toArray(children);
-
-    return (
+    const tabs = React.Children.toArray(children);    return (
         <div className="flex flex-col h-full">
             {/* Tab navigation */}
-            <div className="flex border-b border-gray-200 bg-gray-50 px-4 py-2">
+            <div className="flex border-b border-surface bg-surface-bg px-4 py-2">
                 <button
-                    className={`flex items-center py-3 px-6 relative mr-2 ${
+                    className={`flex items-center py-3 px-6 relative mr-2 transition-colors ${
                         activeTab === 0
-                            ? 'text-indigo-700 font-medium bg-white border-t border-l border-r border-gray-200 rounded-t-lg border-b-2 border-b-indigo-600'
-                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                            ? 'text-brand-light font-medium bg-surface border-t border-l border-r border-surface rounded-t-lg border-b-2 border-b-brand'
+                            : 'text-muted hover:text-primary hover:bg-surface-light'
                     }`}
                     onClick={() => setActiveTab(0)}
                 >
@@ -22,10 +20,10 @@ const TabNavigation = ({children}) => {
                     <span>Chat</span>
                 </button>
                 <button
-                    className={`flex items-center py-3 px-6 relative ${
+                    className={`flex items-center py-3 px-6 relative transition-colors ${
                         activeTab === 1
-                            ? 'text-indigo-700 font-medium bg-white border-t border-l border-r border-gray-200 rounded-t-lg border-b-2 border-b-indigo-600'
-                            : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                            ? 'text-brand-light font-medium bg-surface border-t border-l border-r border-surface rounded-t-lg border-b-2 border-b-brand'
+                            : 'text-muted hover:text-primary hover:bg-surface-light'
                     }`}
                     onClick={() => setActiveTab(1)}
                 >
@@ -35,7 +33,7 @@ const TabNavigation = ({children}) => {
             </div>
 
             {/* Tab content */}
-            <div className="flex-1 overflow-hidden bg-white border border-gray-200 rounded-b-lg">
+            <div className="flex-1 overflow-hidden bg-surface-dark border border-surface rounded-b-lg">
                 {tabs.map((tab, index) => (
                     <div
                         key={index}

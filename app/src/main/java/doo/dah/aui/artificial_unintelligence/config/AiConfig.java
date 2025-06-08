@@ -2,8 +2,7 @@ package doo.dah.aui.artificial_unintelligence.config;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
-import org.springframework.ai.chat.memory.InMemoryChatMemory;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.ollama.api.OllamaOptions;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,21 +16,16 @@ public class AiConfig {
     protected String instructions;
 
     @Bean
-    public MessageChatMemoryAdvisor messageChatMemoryAdvisor() {
-        return new MessageChatMemoryAdvisor(new InMemoryChatMemory());
-    }
-
-    @Bean
+    public MessageChatMemoryAdvisor messageChatMemoryAdvisor(ChatMemory chatMemory) {
+        return MessageChatMemoryAdvisor.builder(chatMemory).build();
+    }    @Bean
     public ChatClient buildClient(
             ChatClient.Builder aiBuilder,
             MessageChatMemoryAdvisor messageChatMemoryAdvisor,
             VectorStore pineconeVectorStore
     ) {
         return aiBuilder
-                .defaultAdvisors(
-                        messageChatMemoryAdvisor,
-                        new QuestionAnswerAdvisor(pineconeVectorStore)
-                )
+                .defaultAdvisors(messageChatMemoryAdvisor)
                 .defaultSystem(instructions)
                 .defaultOptions(new OllamaOptions())
                 .build();

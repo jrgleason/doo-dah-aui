@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.4.3'
+	id 'org.springframework.boot' version '3.5.0'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -24,7 +24,19 @@ repositories {
 }
 
 ext {
-	set('springAiVersion', "1.0.0-M6")
+	set('springAiVersion', "1.0.0")
+	set('sqliteJdbcVersion', "3.49.1.0")
+	set('hibernateDialectsVersion', "6.6.8.Final")
+	set('jsoupVersion', "1.18.3")
+	set('tikaVersion', "3.1.0")
+	set('pdfboxVersion', "3.0.4")
+	set('poiVersion', "5.2.5")
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+	}
 }
 
 dependencies {
@@ -35,19 +47,20 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-	implementation 'org.springframework.ai:spring-ai-ollama-spring-boot-starter'
-	implementation 'org.springframework.ai:spring-ai-pinecone-store-spring-boot-starter'
-	implementation 'org.xerial:sqlite-jdbc:3.49.1.0'
-	implementation 'org.hibernate.orm:hibernate-community-dialects:6.6.8.Final'
-	implementation 'org.jsoup:jsoup:1.18.3' // or the latest version
-
+	implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
+	implementation 'org.springframework.ai:spring-ai-advisors-vector-store'
+	implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory'
+	implementation 'org.springframework.ai:spring-ai-starter-vector-store-pinecone'
+	implementation "org.xerial:sqlite-jdbc:${sqliteJdbcVersion}"
+	implementation "org.hibernate.orm:hibernate-community-dialects:${hibernateDialectsVersion}"
+	implementation "org.jsoup:jsoup:${jsoupVersion}" // or the latest version
 	// Document processing dependencies
-	implementation 'org.apache.tika:tika-core:3.1.0'
-	implementation 'org.apache.tika:tika-parsers-standard-package:3.1.0'
-	implementation 'org.apache.pdfbox:pdfbox:3.0.4'
-	implementation 'org.apache.poi:poi:5.2.5'
-	implementation 'org.apache.poi:poi-ooxml:5.2.5'
-	implementation 'org.apache.poi:poi-scratchpad:5.2.5'
+	implementation "org.apache.tika:tika-core:${tikaVersion}"
+	implementation "org.apache.tika:tika-parsers-standard-package:${tikaVersion}"
+	implementation "org.apache.pdfbox:pdfbox:${pdfboxVersion}"
+	implementation "org.apache.poi:poi:${poiVersion}"
+	implementation "org.apache.poi:poi-ooxml:${poiVersion}"
+	implementation "org.apache.poi:poi-scratchpad:${poiVersion}"
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -59,12 +72,6 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-}
-
-dependencyManagement {
-	imports {
-		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
-	}
 }
 
 tasks.named('test') {

@@ -3,7 +3,6 @@ import {Link as LinkIcon, Plus as PlusIcon, Trash as TrashIcon} from 'lucide-rea
 import axios from 'axios';
 import {useAuth0} from "@auth0/auth0-react";
 import {useGlobalConfig} from "../../providers/config/GlobalConfigContext.jsx";
-import './ContentSubmission.css';
 
 const ContentSubmission = () => {
     const { user } = useAuth0();
@@ -131,36 +130,31 @@ const ContentSubmission = () => {
         } finally {
             setIsSubmitting(false);
         }
-    };
-
-    return (
-        <div className="flex flex-col h-full bg-gray-100 rounded-lg shadow-md overflow-hidden">
+    };    return (
+        <div className="flex flex-col h-full bg-surface-50 rounded-lg shadow-md overflow-hidden">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 px-4 py-3 shadow-sm">
-                <h1 className="text-lg font-semibold text-center">Add to Knowledge Base</h1>
+            <div className="bg-surface-100 border-b border-surface-200 px-4 py-3 shadow-sm">
+                <h1 className="text-lg font-semibold text-center text-text-primary">Add to Knowledge Base</h1>
             </div>
 
             {/* Content area */}
-            <div className="flex-1 overflow-y-auto p-4" style={{scrollbarWidth: 'thin'}}>
-                {/* Feedback message */}
+            <div className="flex-1 overflow-y-auto p-4" style={{scrollbarWidth: 'thin'}}>                {/* Feedback message */}
                 {feedbackMessage.message && (
                     <div className={`p-3 mb-4 rounded-lg ${
                         feedbackMessage.type === 'error'
-                            ? 'bg-red-100 text-red-800 border border-red-200'
-                            : 'bg-green-100 text-green-800 border border-green-200'
+                            ? 'bg-danger-900 text-danger-100 border border-danger-500'
+                            : 'bg-brand-900 text-brand-100 border border-brand-500'
                     }`}>
                         {feedbackMessage.message}
                     </div>
-                )}
-
-                {/* Submission type toggle */}
+                )}                {/* Submission type toggle */}
                 <div className="mb-4">
-                    <div className="flex border border-gray-300 rounded-md overflow-hidden">
+                    <div className="flex border border-surface-200 rounded-md overflow-hidden">
                         <button
-                            className={`flex-1 py-2 px-4 text-sm font-medium ${
+                            className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
                                 submissionType === 'direct'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                    ? 'bg-brand-500 text-white'
+                                    : 'bg-surface-100 text-text-primary hover:bg-surface-200'
                             }`}
                             onClick={() => setSubmissionType('direct')}
                         >
@@ -168,10 +162,10 @@ const ContentSubmission = () => {
                         </button>
                         {isAdmin && (
                             <button
-                                className={`flex-1 py-2 px-4 text-sm font-medium ${
+                                className={`flex-1 py-2 px-4 text-sm font-medium transition-colors ${
                                     submissionType === 'url'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                                        ? 'bg-brand-500 text-white'
+                                        : 'bg-surface-100 text-text-primary hover:bg-surface-200'
                                 }`}
                                 onClick={() => setSubmissionType('url')}
                             >
@@ -182,29 +176,26 @@ const ContentSubmission = () => {
                 </div>
 
                 {/* Form */}
-                <div className="space-y-4">
-                    {/* Title */}
+                <div className="space-y-4">                    {/* Title */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-text-primary mb-1">
                             Title
                         </label>
                         <input
                             type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-surface-200 bg-surface-100 text-text-primary rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                             placeholder="Give your submission a title..."
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                         />
-                    </div>
-
-                    {/* Content or URL based on submission type */}
+                    </div>                    {/* Content or URL based on submission type */}
                     {submissionType === 'direct' ? (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-text-primary mb-1">
                                 Content
                             </label>
                             <textarea
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-3 py-2 border border-surface-200 bg-surface-100 text-text-primary rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                                 placeholder="Enter your story, information, or knowledge..."
                                 rows={10}
                                 value={content}
@@ -213,47 +204,43 @@ const ContentSubmission = () => {
                         </div>
                     ) : (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-text-primary mb-1">
                                 URL
                             </label>
                             <div className="flex items-center">
                                 <div
-                                    className="flex-shrink-0 inline-flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 rounded-l-md">
+                                    className="flex-shrink-0 inline-flex items-center px-3 py-2 border border-r-0 border-surface-200 bg-surface-200 text-text-secondary rounded-l-md">
                                     <LinkIcon size={16}/>
                                 </div>
                                 <input
                                     type="url"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="flex-1 px-3 py-2 border border-surface-200 bg-surface-100 text-text-primary rounded-r-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                                     placeholder="https://example.com/article"
                                     value={url}
                                     onChange={(e) => setUrl(e.target.value)}
                                 />
-                            </div>
-
-                            {/* Crawl entire site option */}
+                            </div>                            {/* Crawl entire site option */}
                             <div className="mt-3">
                                 <div className="flex items-center">
                                     <input
                                         id="crawl-entire-site"
                                         type="checkbox"
-                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        className="h-4 w-4 text-brand-500 border-surface-200 rounded focus:ring-brand-500"
                                         checked={crawlEntireSite}
                                         onChange={(e) => setCrawlEntireSite(e.target.checked)}
                                     />
                                     <label htmlFor="crawl-entire-site"
-                                           className="ml-2 text-sm font-medium text-gray-700">
+                                           className="ml-2 text-sm font-medium text-text-primary">
                                         Crawl entire site
                                     </label>
                                 </div>
-                                <p className="mt-1 text-sm text-gray-500">
+                                <p className="mt-1 text-sm text-text-secondary">
                                     When enabled, we'll crawl and process all pages linked from this URL.
                                 </p>
-                            </div>
-
-                            {/* Crawl depth slider (only shown when crawl entire site is enabled) */}
+                            </div>                            {/* Crawl depth slider (only shown when crawl entire site is enabled) */}
                             {crawlEntireSite && (
                                 <div className="mt-3">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label className="block text-sm font-medium text-text-primary mb-1">
                                         Crawl Depth: {crawlDepth}
                                     </label>
                                     <input
@@ -263,26 +250,24 @@ const ContentSubmission = () => {
                                         step="1"
                                         value={crawlDepth}
                                         onChange={(e) => setCrawlDepth(parseInt(e.target.value))}
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                        className="w-full h-2 bg-surface-200 rounded-lg appearance-none cursor-pointer"
                                     />
-                                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                    <div className="flex justify-between text-xs text-text-secondary mt-1">
                                         <span>Shallow (faster)</span>
                                         <span>Deep (thorough)</span>
                                     </div>
                                 </div>
                             )}
                         </div>
-                    )}
-
-                    {/* Tags */}
+                    )}                    {/* Tags */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-text-primary mb-1">
                             Tags
                         </label>
                         <div className="flex space-x-2 mb-2">
                             <input
                                 type="text"
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="flex-1 px-3 py-2 border border-surface-200 bg-surface-100 text-text-primary rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                                 placeholder="Add tags..."
                                 value={currentTag}
                                 onChange={(e) => setCurrentTag(e.target.value)}
@@ -290,7 +275,7 @@ const ContentSubmission = () => {
                             />
                             <button
                                 onClick={handleAddTag}
-                                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-500 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
                             >
                                 <PlusIcon size={16}/>
                             </button>
@@ -301,12 +286,12 @@ const ContentSubmission = () => {
                             {tags.map((tag, index) => (
                                 <div
                                     key={index}
-                                    className="inline-flex items-center px-2 py-1 rounded-full text-sm bg-blue-100 text-blue-800 tag-item"
+                                    className="inline-flex items-center px-2 py-1 rounded-full text-sm bg-brand-900 text-brand-100 tag-item"
                                 >
                                     {tag}
                                     <button
                                         onClick={() => handleRemoveTag(tag)}
-                                        className="ml-1 text-blue-600 hover:text-blue-800"
+                                        className="ml-1 text-brand-300 hover:text-brand-100"
                                     >
                                         <TrashIcon size={14}/>
                                     </button>
@@ -315,17 +300,15 @@ const ContentSubmission = () => {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Submit button */}
-            <div className="bg-white border-t border-gray-200 p-4">
+            </div>            {/* Submit button */}
+            <div className="bg-surface-100 border-t border-surface-200 p-4">
                 <button
                     onClick={handleSubmit}
                     disabled={isSubmitting || !isFormValid()}
-                    className={`w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                    className={`w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white transition-colors ${
                         isSubmitting || !isFormValid()
-                            ? 'bg-gray-300 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                            ? 'bg-surface-300 cursor-not-allowed'
+                            : 'bg-brand-500 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500'
                     }`}
                 >
                     {isSubmitting ? (
