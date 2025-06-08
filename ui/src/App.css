@@ -5,9 +5,39 @@ html, body, #root {
     height: 100%;
     width: 100%;
     margin: 0;
+    padding: 0;
     overflow: hidden;
-    background-color: #0f172a; /* surface-900 */
-    color: white;
+    /* Android WebView and mobile browser fixes */
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure no gaps on mobile devices */
+body {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh; /* Use dynamic viewport height when supported */
+}
+
+/* Ensure root fills the viewport properly */
+#root {
+    min-height: 100vh;
+    min-height: 100dvh; /* Use dynamic viewport height when supported */
+}
+
+/* Android density-specific fixes */
+@media screen and (-webkit-device-pixel-ratio: 1.5) {
+    /* High-density screens */
+    html, body {
+        -webkit-text-size-adjust: 100%;
+    }
+}
+
+@media screen and (-webkit-device-pixel-ratio: 0.75) {
+    /* Low-density screens */
+    html, body {
+        -webkit-text-size-adjust: 100%;
+    }
 }
 
 /* Focus styles - Let Tailwind handle focus states with focus-visible and ring utilities */

@@ -36,9 +36,9 @@ function AppContentWithAuth() {
     const {isAuthenticated, isLoading} = useAuth0();
     console.log('Is authenticated:', isAuthenticated);
     console.log('Is loaded:', !isLoading);
-    return (<div className="h-screen w-full flex flex-col bg-surface-900">
+    return (<div className="h-screen w-full flex flex-col bg-surface-900 relative">
             <NavBar isFixed={true}/>
-            <main className="flex-1 w-full bg-surface-900 overflow-hidden">
+            <main className="flex-1 w-full bg-surface-900 overflow-hidden relative">
                 {isLoading ? <LoadingLayer/> : null}
                 <div className={`h-full w-full ${isAuthenticated ? '' : 'overflow-auto'}`}>
                     {isAuthenticated ? <MainPage/> : <Marketing/>}
