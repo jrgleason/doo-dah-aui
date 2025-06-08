@@ -4,6 +4,7 @@ import React from "react";
 function Marketing() {
     return (
         <div className={"w-full h-full bg-surface-900"}>
+            <div className="h-14 sm:h-16 flex-shrink-0"/>
             <div className="container mx-auto px-4 py-8 max-w-5xl overflow-auto">
                 <div className="bg-surface-800">
                     <div className="w-full flex justify-center overflow-hidden bg-danger-600">
