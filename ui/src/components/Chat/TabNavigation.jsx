@@ -31,7 +31,8 @@ const TabNavigation = ({children}) => {
                     <Database size={18} className="mr-2"/>
                     <span>Add Knowledge</span>
                 </button>
-            </div>            {/* Tab content */}
+            </div>
+            {/* Tab content */}
             <div className="flex-1 bg-surface-800 border border-surface-600 rounded-b-lg min-h-0">
                 {tabs.map((tab, index) => (
                     <div
