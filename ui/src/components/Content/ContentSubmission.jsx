@@ -251,7 +251,7 @@ const ContentSubmission = () => {
                             </p>
                         </div>
 
-                        {state.crawlEntireSite && (
+                        { state.crawlEntireSite && (
                             <div>
                                 <label className="block text-sm font-medium text-white mb-2">
                                     Crawl Depth: {state.crawlDepth}

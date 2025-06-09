@@ -1,5 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Send as SendIcon} from 'lucide-react';
+import {Button} from '@mui/material';
 import {useAuth0} from "@auth0/auth0-react";
 import {useGlobalConfig} from "../../providers/config/GlobalConfigContext.jsx";
 import ReactMarkdown from 'react-markdown';
@@ -208,18 +209,15 @@ const ChatComponent = () => {
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyDown={handleKeyDown}
                         rows={1}
-                        style={{maxHeight: '120px', overflow: 'auto'}}
-                    />
-                    <button
+                        style={{maxHeight: '120px', overflow: 'auto'}}                    />                    <Button
                         onClick={handleSendMessage}
                         disabled={!inputMessage.trim() || isLoading}
-                        className={`bg-brand-500 hover:bg-brand-600 disabled:bg-surface-500 rounded-lg px-6 py-2 text-white font-medium transition-colors flex items-center justify-center sm:w-auto w-full ${
-                            !inputMessage.trim() || isLoading ? 'cursor-not-allowed opacity-50' : ''
-                        }`}
+                        variant="contained"
+                        className="hover:bg-brand-600 disabled:bg-surface-500 bg-brand-500 text-white font-medium px-3 py-1 min-w-full sm:min-w-max"
+                        startIcon={<SendIcon size={20} />}
                     >
-                        <SendIcon size={20}/>
-                        <span className="sm:hidden ml-2">Send</span>
-                    </button>
+                        <span className="sm:hidden">Send</span>
+                    </Button>
                 </div>
             </div>
         </div>

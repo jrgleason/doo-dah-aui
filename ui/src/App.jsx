@@ -9,10 +9,12 @@ import LoadingLayer from "./pages/Loading/LoadingLayer.jsx";
 function AppContent() {
     const config = useGlobalConfig();
     if (!config) {
-        return <div className="flex items-center justify-center h-screen bg-surface-900">
-            <div
-                className="w-[50px] h-[50px] border-4 border-surface-600 border-t-brand-500 rounded-full animate-spin"></div>
-        </div>; // Handle loading state
+        return (
+            <div className="flex items-center justify-center h-full bg-surface-900">
+                <div
+                    className="w-[50px] h-[50px] border-4 border-surface-600 border-t-brand-500 rounded-full animate-spin"></div>
+            </div>
+        ); // Handle loading state
     }
 
     return (
@@ -35,15 +37,10 @@ function AppContent() {
 function AppContentWithAuth() {
     const {isAuthenticated, isLoading} = useAuth0();
     console.log('Is authenticated:', isAuthenticated);
-    console.log('Is loaded:', !isLoading);
-    return (<div className="h-screen w-full flex flex-col bg-surface-900 relative">
+    return (
+        <div className="size-full bg-surface-900">
             <NavBar isFixed={true}/>
-            <main className="flex-1 w-full bg-surface-900 overflow-hidden relative">
-                {isLoading ? <LoadingLayer/> : null}
-                <div className={`h-full w-full ${isAuthenticated ? '' : 'overflow-auto'}`}>
-                    {isAuthenticated ? <MainPage/> : <Marketing/>}
-                </div>
-            </main>
+            {!isLoading && isAuthenticated ? <MainPage/> : <Marketing/>}
         </div>
     );
 }
