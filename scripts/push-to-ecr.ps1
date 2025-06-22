@@ -1,57 +1,9 @@
 # PowerShell script to push image to ECR
 $REGION = "us-east-2"
 $REPOSITORY_NAME = "doo-dah-aui"
-$EXTERNAL_IP = "108.82.238.227"
-$LOCAL_REGISTRY_PORT = "30500"
-$EXTERNAL_REGISTRY = "$EXTERNAL_IP" + ":" + "$LOCAL_REGISTRY_PORT"
 $AWS_PROFILE = "partyk1d24"
 
-Write-Host "🐳 Registry setup for doo-dah-aui..." -ForegroundColor Yellow
-Write-Host "Using external IP: $EXTERNAL_IP" -ForegroundColor Cyan
-
-# Test if external registry is accessible
-Write-Host "Testing external registry accessibility: $EXTERNAL_REGISTRY" -ForegroundColor Yellow
-
-try {
-    $response = Invoke-WebRequest -Uri "http://$EXTERNAL_REGISTRY/v2/" -Method GET -TimeoutSec 10
-    Write-Host "External registry is accessible via HTTP!" -ForegroundColor Green
-    Write-Host "Status: $($response.StatusCode)" -ForegroundColor Green
-    
-    Write-Host ""
-    Write-Host "Your registry should work with ECS!" -ForegroundColor Green
-    Write-Host "Registry URL: $EXTERNAL_REGISTRY/doo-dah-aui:latest" -ForegroundColor Cyan
-    Write-Host ""
-    $choice = Read-Host "Do you want to (1) Use external registry or (2) Use ECR? [1/2]"
-    
-    if ($choice -eq "1") {
-        Write-Host "Creating ECS task definition for external registry..." -ForegroundColor Green
-        
-        # Update task definition with external IP
-        $taskDefContent = Get-Content "ecs-task-definition.json" -Raw
-          # Get Account ID
-        $ACCOUNT_ID = aws sts get-caller-identity --query "Account" --output text --profile $AWS_PROFILE
-        $taskDefContent = $taskDefContent -replace "{ACCOUNT_ID}", $ACCOUNT_ID
-        
-        $taskDefContent | Out-File -FilePath "ecs-task-definition-external.json" -Encoding ascii -NoNewline
-        
-        Write-Host "Task definition created: ecs-task-definition-external.json" -ForegroundColor Green
-        Write-Host "Image URI: $EXTERNAL_REGISTRY/doo-dah-aui:latest" -ForegroundColor Cyan
-        Write-Host "You can now run the ECS deployment script with this task definition!" -ForegroundColor Yellow
-        exit 0
-    }
-}
-catch {
-    Write-Host "Cannot reach external registry: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "This might be because:" -ForegroundColor Yellow
-    Write-Host "   1. Port $LOCAL_REGISTRY_PORT is not forwarded through your router/firewall" -ForegroundColor Yellow
-    Write-Host "   2. Your Kubernetes NodePort service isn't accessible externally" -ForegroundColor Yellow
-    Write-Host "   3. Your ISP blocks incoming connections on port $LOCAL_REGISTRY_PORT" -ForegroundColor Yellow
-    Write-Host "Proceeding with ECR setup..." -ForegroundColor Yellow
-}
-
-# Continue with ECR setup...
-Write-Host ""
-Write-Host "Setting up ECR..." -ForegroundColor Yellow
+Write-Host "Setting up ECR deployment for doo-dah-aui..." -ForegroundColor Yellow
 
 # 1. Create ECR repository
 Write-Host "Creating ECR repository..." -ForegroundColor Yellow
@@ -75,7 +27,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-echo $loginPassword | docker login --username AWS --password-stdin $ECR_LOGIN_SERVER
+Write-Output $loginPassword | docker login --username AWS --password-stdin $ECR_LOGIN_SERVER
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Failed to login to ECR. Check Docker daemon is running." -ForegroundColor Red
     exit 1
@@ -94,18 +46,26 @@ if ($LASTEXITCODE -eq 0) {
 } else {
     Write-Host "Jib push failed, trying Docker fallback..." -ForegroundColor Yellow
     
-    # Fallback: Pull from local registry and push via Docker
-    Write-Host "Pulling image from local registry..." -ForegroundColor Yellow
-    docker pull 108.82.238.227:30500/doo-dah-aui:latest
+    # Fallback: Build image locally and push via Docker
+    Write-Host "Building image locally..." -ForegroundColor Yellow
+    
+    # Check if Dockerfile exists
+    if (-not (Test-Path "Dockerfile")) {
+        Write-Host "ERROR: Dockerfile not found. Cannot build image locally." -ForegroundColor Red
+        exit 1
+    }
+    
+    # Build image locally
+    docker build -t "doo-dah-aui:latest" .
     
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "Failed to pull from local registry. Build image first with 'gradlew build'" -ForegroundColor Red
+        Write-Host "Failed to build image locally." -ForegroundColor Red
         exit 1
     }
 
     # Tag image for ECR
     Write-Host "Tagging image for ECR..." -ForegroundColor Yellow
-    docker tag 108.82.238.227:30500/doo-dah-aui:latest "$ECR_URI`:latest"
+    docker tag "doo-dah-aui:latest" "$ECR_URI`:latest"
 
     # Push to ECR
     Write-Host "Pushing image to ECR..." -ForegroundColor Yellow
@@ -122,25 +82,102 @@ if ($LASTEXITCODE -eq 0) {
 
 # 6. Update task definition with ECR URI
 Write-Host "Updating task definition with ECR URI..." -ForegroundColor Yellow
-$taskDefContent = Get-Content "ecs-task-definition.json" -Raw
-$taskDefContent = $taskDefContent -replace "108\.82\.238\.227:30500/doo-dah-aui:latest", "$ECR_URI`:latest"
 
-# Get Account ID
-$ACCOUNT_ID = aws sts get-caller-identity --query "Account" --output text --profile $AWS_PROFILE
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Failed to get AWS Account ID. Check your AWS credentials." -ForegroundColor Red
+# Debug: Check what task definition files exist
+Write-Host "DEBUG: Checking for task definition files..." -ForegroundColor Magenta
+$possibleFiles = @(
+    "aws/ecs-task-definition.json",
+    "ecs-task-definition.json",
+    "aws/ecs-task-definition-ecr.json"
+)
+
+$sourceFile = $null
+foreach ($file in $possibleFiles) {
+    Write-Host "DEBUG: Checking $file..." -ForegroundColor Magenta
+    if (Test-Path $file) {
+        Write-Host "DEBUG: Found $file" -ForegroundColor Green
+        $sourceFile = $file
+        break
+    } else {
+        Write-Host "DEBUG: $file not found" -ForegroundColor Yellow
+    }
+}
+
+if (-not $sourceFile) {
+    Write-Host "ERROR: No task definition template found!" -ForegroundColor Red
+    Write-Host "Looked for:" -ForegroundColor Yellow
+    $possibleFiles | ForEach-Object { Write-Host "  - $_" -ForegroundColor White }
+    
+    if (Test-Path "aws") {
+        Write-Host "Files in aws/ directory:" -ForegroundColor Yellow
+        Get-ChildItem "aws" | ForEach-Object { Write-Host "  - $($_.Name)" -ForegroundColor White }
+    }
     exit 1
 }
-$taskDefContent = $taskDefContent -replace "\{ACCOUNT_ID\}", $ACCOUNT_ID
 
-# Use Set-Content instead of Out-File to avoid BOM issues
-$taskDefContent | Set-Content -Path "aws/ecs-task-definition-ecr.json" -Encoding UTF8
+Write-Host "Using source file: $sourceFile" -ForegroundColor Green
 
-Write-Host "Task definition updated with ECR image URI" -ForegroundColor Green
-Write-Host "Updated file: aws/ecs-task-definition-ecr.json" -ForegroundColor Cyan
-Write-Host "Account ID: $ACCOUNT_ID" -ForegroundColor Cyan
-Write-Host "Image URI: $ECR_URI`:latest" -ForegroundColor Cyan
+try {
+    $taskDefContent = Get-Content $sourceFile -Raw
+    Write-Host "Successfully read task definition template" -ForegroundColor Green
+    
+    # Replace external registry with ECR URI if it exists in the template
+    $originalContent = $taskDefContent
+    $taskDefContent = $taskDefContent -replace "108\.82\.238\.227:30500/doo-dah-aui:latest", "$ECR_URI`:latest"
+    
+    # Also replace any other common local registry patterns
+    $taskDefContent = $taskDefContent -replace "localhost:30500/doo-dah-aui:latest", "$ECR_URI`:latest"
+
+    # Get Account ID
+    $ACCOUNT_ID = aws sts get-caller-identity --query "Account" --output text --profile $AWS_PROFILE
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to get AWS Account ID. Check your AWS credentials." -ForegroundColor Red
+        exit 1
+    }
+    
+    # Replace account ID placeholder
+    $taskDefContent = $taskDefContent -replace "\{ACCOUNT_ID\}", $ACCOUNT_ID
+    $taskDefContent = $taskDefContent -replace "660315378336", $ACCOUNT_ID
+
+    # Check if any replacements were made
+    if ($taskDefContent -eq $originalContent) {
+        Write-Host "WARNING: No replacements were made to task definition" -ForegroundColor Yellow
+    } else {
+        Write-Host "Task definition updated with ECR URI and Account ID" -ForegroundColor Green
+    }
+
+    # Ensure aws directory exists
+    if (-not (Test-Path "aws")) {
+        New-Item -ItemType Directory -Path "aws" | Out-Null
+        Write-Host "Created aws/ directory" -ForegroundColor Green
+    }
+
+    # Use UTF-8 without BOM to avoid AWS CLI parsing issues
+    $outputFile = "aws/ecs-task-definition-ecr.json"
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllText("$PWD/$outputFile", $taskDefContent, $utf8NoBom)
+    
+    Write-Host "Task definition updated and saved to: $outputFile" -ForegroundColor Green
+    Write-Host "Account ID: $ACCOUNT_ID" -ForegroundColor Cyan
+    Write-Host "Image URI: $ECR_URI`:latest" -ForegroundColor Cyan
+    
+    # Validate the generated JSON
+    try {
+        $testJson = $taskDefContent | ConvertFrom-Json
+        Write-Host "Generated JSON is valid" -ForegroundColor Green
+    } catch {
+        Write-Host "WARNING: Generated JSON may be invalid: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+    
+} catch {
+    Write-Host "ERROR: Failed to process task definition: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+
 Write-Host ""
 Write-Host "You can now deploy to ECS using:" -ForegroundColor Yellow
-Write-Host "aws ecs register-task-definition --cli-input-json file://aws/ecs-task-definition-ecr.json --profile $AWS_PROFILE" -ForegroundColor White
-Write-Host "aws ecs update-service --cluster doo-dah --service doo-dah-aui --task-definition doo-dah-aui --profile $AWS_PROFILE" -ForegroundColor White
+Write-Host "  .\scripts\deploy-to-ecs.ps1" -ForegroundColor White
+Write-Host ""
+Write-Host "Or manually with:" -ForegroundColor Yellow
+Write-Host "  aws ecs register-task-definition --cli-input-json file://aws/ecs-task-definition-ecr.json --profile $AWS_PROFILE" -ForegroundColor White
+Write-Host "  aws ecs update-service --cluster doo-dah --service doo-dah-aui --task-definition doo-dah-aui-task --profile $AWS_PROFILE" -ForegroundColor White

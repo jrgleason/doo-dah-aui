@@ -1,7 +1,6 @@
 # PowerShell script to complete ALB setup after certificate validation
 $AWS_PROFILE = "partyk1d24"
 $REGION = "us-east-2"
-$CERT_ARN = "arn:aws:acm:us-east-2:660315378336:certificate/238b56f3-4ba8-46a6-8791-2dce019c3863"
 
 Write-Host "Completing ALB setup after certificate validation..." -ForegroundColor Yellow
 
@@ -13,6 +12,11 @@ if (Test-Path "alb-config.env") {
         }
     }
     Write-Host "Loaded ALB configuration" -ForegroundColor Green
+    
+    if (-not $CERT_ARN) {
+        Write-Host "Certificate ARN not found in alb-config.env. Please run alb-setup.ps1 first." -ForegroundColor Red
+        exit 1
+    }
 } else {
     Write-Host "alb-config.env not found. Please run alb-setup.ps1 first." -ForegroundColor Red
     exit 1
