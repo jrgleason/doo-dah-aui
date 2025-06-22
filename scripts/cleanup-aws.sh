@@ -28,30 +28,68 @@ run_aws_command() {
     local command="$2"
     local suppress_output="${3:-false}"
     
-    echo "🗑️ $description..."
+    echo "Deleting $description..."
     if [[ "$suppress_output" == "true" ]]; then
-        if eval "$command --output text" >/dev/null 2>&1; then
-            echo "✅ $description completed"
+        if eval "$command" >/dev/null 2>&1; then
+            echo "Successfully deleted $description"
         else
-            echo "⚠️ $description failed (may not exist)"
+            echo "Failed to delete $description (may not exist)"
         fi
     else
-        if eval "$command" >/dev/null 2>&1; then
-            echo "✅ $description completed"
+        if eval "$command"; then
+            echo "Successfully deleted $description"
         else
-            echo "⚠️ $description failed (may not exist)"
+            echo "Failed to delete $description (may not exist)"
         fi
     fi
     echo ""
 }
 
+# Function to try deleting a security group with retries
+remove_security_group_with_retry() {
+    local group_id="$1"
+    local description="$2"
+    local max_retries=${3:-6}
+    local retry_interval=${4:-10}
+    
+    if [[ -z "$group_id" || "$group_id" == "None" || "$group_id" == "" ]]; then
+        echo "No $description to delete (empty GroupId)"
+        return
+    fi
+    
+    echo "Attempting to delete $description (ID: $group_id)..."
+    
+    for ((retry=1; retry<=max_retries; retry++)); do
+        if aws ec2 delete-security-group --group-id "$group_id" --region "$REGION" --profile "$AWS_PROFILE" >/dev/null 2>&1; then
+            echo "Successfully deleted $description"
+            return
+        else
+            local error_output
+            error_output=$(aws ec2 delete-security-group --group-id "$group_id" --region "$REGION" --profile "$AWS_PROFILE" 2>&1)
+            
+            if [[ "$error_output" == *"DependencyViolation"* ]]; then
+                echo "Retry $retry of $max_retries : $description still has dependencies, waiting..."
+                sleep "$retry_interval"
+            elif [[ "$error_output" == *"InvalidGroup"* ]]; then
+                echo "$description does not exist or was already deleted"
+                return
+            else
+                echo "Failed to delete $description : $error_output"
+                return
+            fi
+        fi
+    done
+    
+    echo "Warning: Could not delete $description after $max_retries attempts"
+}
+
 # 1. Scale down ECS service to 0 (stops tasks)
-echo "📉 Scaling down ECS service..."
-run_aws_command "Scale ECS service to 0" "aws ecs update-service --cluster doo-dah --service doo-dah-aui --desired-count 0 --region $REGION --profile $AWS_PROFILE" true
+echo "Scaling down ECS service..."
+run_aws_command "ECS service scale-down" "aws ecs update-service --cluster doo-dah --service doo-dah-aui --desired-count 0 --region $REGION --profile $AWS_PROFILE --output text" true
 
 # Wait for tasks to stop and force stop any remaining tasks
-echo "⏳ Waiting for all tasks to stop..."
-max_wait_time=120  # Wait up to 2 minutes for graceful shutdown
+echo "Waiting for all tasks to stop..."
+max_wait_time=180  # Wait up to 3 minutes for graceful shutdown
 wait_interval=5    # Check every 5 seconds
 total_waited=0
 
@@ -60,6 +98,106 @@ while [ $total_waited -lt $max_wait_time ]; do
     total_waited=$((total_waited + wait_interval))
     
     # Check service status first to see if it exists and is scaling down
+    service_status=$(aws ecs describe-services --cluster doo-dah --services doo-dah-aui --region "$REGION" --profile "$AWS_PROFILE" --query "services[0].status" --output text 2>/dev/null)
+    echo "DEBUG: Service status: '$service_status'"
+    
+    if [[ "$service_status" == "None" || -z "$service_status" ]]; then
+        echo "Service no longer exists, checking for any remaining tasks..."
+        # Use JSON output for better parsing
+        all_tasks_json=$(aws ecs list-tasks --cluster doo-dah --region "$REGION" --profile "$AWS_PROFILE" --query "taskArns" --output json 2>/dev/null)
+        echo "DEBUG: All tasks in cluster JSON: '$all_tasks_json'"
+        
+        if [[ -n "$all_tasks_json" && "$all_tasks_json" != "[]" && "$all_tasks_json" != "null" ]]; then
+            # Parse JSON array
+            all_tasks=$(echo "$all_tasks_json" | jq -r '.[]' 2>/dev/null || echo "")
+        else
+            all_tasks=""
+        fi
+    else
+        # Get ALL tasks for the specific service
+        all_tasks_json=$(aws ecs list-tasks --cluster doo-dah --service-name doo-dah-aui --region "$REGION" --profile "$AWS_PROFILE" --query "taskArns" --output json 2>/dev/null)
+        echo "DEBUG: Service-specific tasks JSON: '$all_tasks_json'"
+        
+        if [[ -n "$all_tasks_json" && "$all_tasks_json" != "[]" && "$all_tasks_json" != "null" ]]; then
+            # Parse JSON array
+            all_tasks=$(echo "$all_tasks_json" | jq -r '.[]' 2>/dev/null || echo "")
+        else
+            all_tasks=""
+        fi
+    fi
+    
+    if [[ -n "$all_tasks" ]]; then
+        # Count non-empty tasks
+        task_count=0
+        active_tasks=()
+        
+        # Get detailed status of tasks and filter out STOPPED tasks
+        if [[ -n "$all_tasks" ]]; then
+            echo "DEBUG: Getting task details for tasks..."
+            
+            # Convert newline-separated list to space-separated for AWS CLI
+            task_list=$(echo "$all_tasks" | tr '\n' ' ')
+            
+            if [[ -n "$task_list" ]]; then
+                task_details_result=$(aws ecs describe-tasks --cluster doo-dah --tasks $task_list --region "$REGION" --profile "$AWS_PROFILE" 2>&1)
+                
+                if [[ $? -eq 0 ]]; then
+                    echo "DEBUG: Successfully got task details"
+                    
+                    # Filter out STOPPED tasks using jq
+                    active_task_count=$(echo "$task_details_result" | jq -r '.tasks[] | select(.lastStatus != "STOPPED") | .taskArn' 2>/dev/null | wc -l)
+                    
+                    if [[ $active_task_count -gt 0 ]]; then
+                        task_count=$active_task_count
+                        
+                        echo "Active task statuses:"
+                        echo "$task_details_result" | jq -r '.tasks[] | select(.lastStatus != "STOPPED") | "  Task " + (.taskArn | split("/")[-1]) + " : " + .lastStatus' 2>/dev/null
+                        
+                        # Store active tasks for potential force stop
+                        readarray -t active_tasks < <(echo "$task_details_result" | jq -r '.tasks[] | select(.lastStatus != "STOPPED") | .taskArn' 2>/dev/null)
+                    else
+                        task_count=0
+                        echo "DEBUG: All tasks are STOPPED"
+                    fi
+                else
+                    echo "DEBUG: Failed to get task details: $task_details_result"
+                    # If we can't get details, assume tasks are still active for safety
+                    task_count=$(echo "$all_tasks" | wc -l)
+                    readarray -t active_tasks < <(echo "$all_tasks")
+                fi
+            else
+                task_count=0
+            fi
+        else
+            task_count=0
+        fi
+        
+        if [[ $task_count -gt 0 ]]; then
+            echo "Still have $task_count active task(s), waiting... ($total_waited seconds elapsed)"
+            
+            # If we've waited too long, force stop the tasks
+            if [[ $total_waited -ge $max_wait_time ]]; then
+                echo "Timeout reached. Force stopping remaining active tasks..."
+                for task_arn in "${active_tasks[@]}"; do
+                    if [[ -n "$task_arn" ]]; then
+                        task_id=$(basename "$task_arn")
+                        echo "Force stopping task: $task_id"
+                        aws ecs stop-task --cluster doo-dah --task "$task_id" --region "$REGION" --profile "$AWS_PROFILE" --output text >/dev/null 2>&1
+                    fi
+                done
+                # Wait a bit more for force stop to complete
+                sleep 20
+                break
+            fi
+        else
+            echo "All tasks have stopped"
+            break
+        fi
+    else
+        echo "No tasks found - all tasks have stopped"
+        break
+    fi
+done
     service_status=$(aws ecs describe-services --cluster doo-dah --services doo-dah-aui --region $REGION --profile $AWS_PROFILE --query "services[0].status" --output text 2>/dev/null)
     
     if [ "$service_status" = "None" ] || [ -z "$service_status" ]; then

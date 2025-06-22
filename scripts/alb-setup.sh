@@ -29,28 +29,43 @@ ALB_SG_ID=$(aws ec2 create-security-group \
     --profile "$AWS_PROFILE" \
     --region "$REGION" \
     --query "GroupId" \
-    --output text)
+    --output text 2>/dev/null)
 
-echo "ALB Security Group ID: $ALB_SG_ID"
+if [[ -n "$ALB_SG_ID" && "$ALB_SG_ID" != "None" ]]; then
+    echo "ALB Security Group created: $ALB_SG_ID"
+else
+    # Security group might already exist, try to find it
+    ALB_SG_ID=$(aws ec2 describe-security-groups \
+        --filters "Name=group-name,Values=doo-dah-aui-alb-sg" \
+        --query "SecurityGroups[0].GroupId" \
+        --output text \
+        --profile "$AWS_PROFILE" \
+        --region "$REGION" 2>/dev/null)
+    echo "Using existing ALB Security Group: $ALB_SG_ID"
+fi
 
-# Add inbound rules for HTTP and HTTPS
-aws ec2 authorize-security-group-ingress \
-    --group-id "$ALB_SG_ID" \
-    --protocol tcp \
-    --port 80 \
-    --cidr 0.0.0.0/0 \
-    --profile "$AWS_PROFILE" \
-    --region "$REGION" >/dev/null
+# Add inbound rules for HTTP and HTTPS (only if we have a valid security group ID)
+if [[ -n "$ALB_SG_ID" && "$ALB_SG_ID" != "None" && "$ALB_SG_ID" != "" ]]; then
+    aws ec2 authorize-security-group-ingress \
+        --group-id "$ALB_SG_ID" \
+        --protocol tcp \
+        --port 80 \
+        --cidr 0.0.0.0/0 \
+        --profile "$AWS_PROFILE" \
+        --region "$REGION" 2>/dev/null
 
-aws ec2 authorize-security-group-ingress \
-    --group-id "$ALB_SG_ID" \
-    --protocol tcp \
-    --port 443 \
-    --cidr 0.0.0.0/0 \
-    --profile "$AWS_PROFILE" \
-    --region "$REGION" >/dev/null
+    aws ec2 authorize-security-group-ingress \
+        --group-id "$ALB_SG_ID" \
+        --protocol tcp \
+        --port 443 \
+        --cidr 0.0.0.0/0 \
+        --profile "$AWS_PROFILE" \
+        --region "$REGION" 2>/dev/null
 
-echo "Security group rules added for ports 80 and 443"
+    echo "Security group rules added for ports 80 and 443"
+else
+    echo "Warning: Could not configure ALB security group rules"
+fi
 echo ""
 
 # Create Application Load Balancer
@@ -129,22 +144,9 @@ HTTP_LISTENER_ARN=$(aws elbv2 create-listener \
 
 echo "HTTP Listener ARN: $HTTP_LISTENER_ARN"
 
-# Create HTTPS listener (will fail until certificate is validated)
-echo "Creating HTTPS listener..."
-HTTPS_LISTENER_ARN=$(aws elbv2 create-listener \
-    --load-balancer-arn "$ALB_ARN" \
-    --protocol HTTPS \
-    --port 443 \
-    --certificates CertificateArn="$CERT_ARN" \
-    --default-actions Type=forward,TargetGroupArn="$TARGET_GROUP_ARN" \
-    --profile "$AWS_PROFILE" \
-    --region "$REGION" \
-    --query "Listeners[0].ListenerArn" \
-    --output text 2>/dev/null || echo "HTTPS listener creation failed - certificate not validated yet")
-
-echo "HTTPS Listener ARN: $HTTPS_LISTENER_ARN"
-echo ""
-
+# Note: HTTPS listener will be created after certificate validation
+echo "HTTPS listener will be created after SSL certificate validation."
+echo "Run the complete-alb-setup.sh script after validating your certificate."
 # Update ECS service security group to allow traffic from ALB
 echo "Updating ECS service security group..."
 ECS_SG_ID=$(aws ec2 describe-security-groups \

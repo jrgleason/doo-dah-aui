@@ -121,9 +121,10 @@ do {
         
         try {
             $taskArray = $allTasksJson | ConvertFrom-Json
-            $allTasks = if ($taskArray -and $taskArray.Count -gt 0) { $taskArray -join " " } else { "" }
+            # Don't join and split - work directly with the array
+            $allTasks = $taskArray
         } catch {
-            $allTasks = ""
+            $allTasks = @()
         }
     } else {
         # Get ALL tasks for the specific service
@@ -132,23 +133,81 @@ do {
         
         try {
             $taskArray = $allTasksJson | ConvertFrom-Json
-            $allTasks = if ($taskArray -and $taskArray.Count -gt 0) { $taskArray -join " " } else { "" }
+            # Don't join and split - work directly with the array
+            $allTasks = $taskArray
         } catch {
-            $allTasks = ""
+            $allTasks = @()
         }
     }
     
-    if ($allTasks -and $allTasks -ne "None" -and $allTasks.Trim() -ne "") {
-        $taskList = $allTasks -split "`s+" | Where-Object { $_ -ne "" -and $_ -ne "None" }
-        Write-Host "DEBUG: Found $($taskList.Count) total tasks" -ForegroundColor Magenta
+    if ($serviceStatus -eq "None" -or -not $serviceStatus) {
+        Write-Host "Service no longer exists, checking for any remaining tasks..." -ForegroundColor Yellow
+        # Use JSON output for better parsing
+        $allTasksJson = aws ecs list-tasks --cluster doo-dah --region $REGION --profile $AWS_PROFILE --query "taskArns" --output json 2>$null
+        Write-Host "DEBUG: All tasks in cluster JSON: '$allTasksJson'" -ForegroundColor Magenta
+        
+        try {
+            $taskArray = $allTasksJson | ConvertFrom-Json
+            $allTasks = $taskArray
+            Write-Host "DEBUG: Parsed task array type: $($allTasks.GetType().Name)" -ForegroundColor Magenta
+            Write-Host "DEBUG: Task array count: $($allTasks.Count)" -ForegroundColor Magenta
+            if ($allTasks.Count -gt 0) {
+                Write-Host "DEBUG: First task ARN: '$($allTasks[0])'" -ForegroundColor Magenta
+            }
+        } catch {
+            Write-Host "DEBUG: Failed to parse JSON: $($_.Exception.Message)" -ForegroundColor Red
+            $allTasks = @()
+        }
+    } else {
+        # Get ALL tasks for the specific service
+        $allTasksJson = aws ecs list-tasks --cluster doo-dah --service-name doo-dah-aui --region $REGION --profile $AWS_PROFILE --query "taskArns" --output json 2>$null
+        Write-Host "DEBUG: Service-specific tasks JSON: '$allTasksJson'" -ForegroundColor Magenta
+        
+        try {
+            $taskArray = $allTasksJson | ConvertFrom-Json
+            $allTasks = $taskArray
+            Write-Host "DEBUG: Parsed task array type: $($allTasks.GetType().Name)" -ForegroundColor Magenta
+            Write-Host "DEBUG: Task array count: $($allTasks.Count)" -ForegroundColor Magenta
+            if ($allTasks.Count -gt 0) {
+                Write-Host "DEBUG: First task ARN: '$($allTasks[0])'" -ForegroundColor Magenta
+                Write-Host "DEBUG: First task ARN length: $($allTasks[0].Length)" -ForegroundColor Magenta
+            }
+        } catch {
+            Write-Host "DEBUG: Failed to parse JSON: $($_.Exception.Message)" -ForegroundColor Red
+            $allTasks = @()
+        }
+    }
+    
+    if ($allTasks -and $allTasks.Count -gt 0) {
+        # Work directly with the task array instead of splitting strings
+        $taskList = $allTasks | Where-Object { $_ -and $_ -ne "" -and $_ -ne "None" }
+        Write-Host "DEBUG: Found $($taskList.Count) total tasks after filtering" -ForegroundColor Magenta
+        
+        # Show each task ARN individually
+        for ($i = 0; $i -lt $taskList.Count; $i++) {
+            Write-Host "DEBUG: Task[$i]: '$($taskList[$i])' (Length: $($taskList[$i].Length))" -ForegroundColor Magenta
+        }
         
         # Get detailed status of tasks and filter out STOPPED tasks
         if ($taskList.Count -gt 0) {
-            Write-Host "DEBUG: Getting task details for tasks: $($taskList -join ', ')" -ForegroundColor Magenta
+            Write-Host "DEBUG: About to call describe-tasks with these ARNs:" -ForegroundColor Magenta
+            $taskList | ForEach-Object { Write-Host "  - '$_'" -ForegroundColor White }
             
             # Try to get task details with better error handling
             try {
-                $taskDetailsResult = aws ecs describe-tasks --cluster doo-dah --tasks ($taskList -join " ") --region $REGION --profile $AWS_PROFILE 2>&1
+                # Create the command arguments more carefully
+                $taskArgsString = ($taskList | ForEach-Object { """$_""" }) -join " "
+                Write-Host "DEBUG: Task args string for AWS CLI: $taskArgsString" -ForegroundColor Magenta
+                
+                # Use a simpler approach - pass one task at a time if multiple
+                if ($taskList.Count -eq 1) {
+                    $singleTaskArn = $taskList[0].Trim()
+                    Write-Host "DEBUG: Calling describe-tasks with single ARN: '$singleTaskArn'" -ForegroundColor Magenta
+                    $taskDetailsResult = aws ecs describe-tasks --cluster doo-dah --tasks $singleTaskArn --region $REGION --profile $AWS_PROFILE 2>&1
+                } else {
+                    Write-Host "DEBUG: Calling describe-tasks with multiple ARNs" -ForegroundColor Magenta
+                    $taskDetailsResult = aws ecs describe-tasks --cluster doo-dah --tasks ($taskList -join " ") --region $REGION --profile $AWS_PROFILE 2>&1
+                }
                 
                 if ($LASTEXITCODE -eq 0) {
                     $taskDetailsJson = $taskDetailsResult | ConvertFrom-Json
