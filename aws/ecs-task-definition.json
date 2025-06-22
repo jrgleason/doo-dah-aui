@@ -1,0 +1,92 @@
+{
+  "family": "doo-dah-aui-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::660315378336:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::660315378336:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "doo-dah-aui",
+      "image": "660315378336.dkr.ecr.us-east-2.amazonaws.com/doo-dah-aui:latest",
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/doo-dah-aui",
+          "awslogs-region": "us-east-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "environment": [
+        {
+          "name": "SPRING_PROFILES_ACTIVE",
+          "value": "aws"
+        },
+        {
+          "name": "SERVER_PORT",
+          "value": "8080"
+        },
+        {
+          "name": "MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE",
+          "value": "health,info"
+        },
+        {
+          "name": "MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS",
+          "value": "always"
+        },
+        {
+          "name": "MANAGEMENT_HEALTH_PROBES_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "JAVA_OPTS",
+          "value": "-Xmx768m -Xms512m"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "AUTH0_CLIENT_ID",
+          "valueFrom": "arn:aws:secretsmanager:us-east-2:660315378336:secret:doo-dah-aui/auth0-client-id-vkE7TM"
+        },
+        {
+          "name": "SQLITE_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:us-east-2:660315378336:secret:doo-dah-aui/sqlite-password-KsVz64"
+        },
+        {
+          "name": "PINECONE_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-east-2:660315378336:secret:doo-dah-aui/pinecone-api-key-v2rF8O"
+        },
+        {
+          "name": "OLLAMA_BASE_URL",
+          "valueFrom": "arn:aws:ssm:us-east-2:660315378336:parameter/doo-dah-aui/ollama-base-url"
+        },
+        {
+          "name": "OLLAMA_MODEL",
+          "valueFrom": "arn:aws:ssm:us-east-2:660315378336:parameter/doo-dah-aui/ollama-model"
+        },
+        {
+          "name": "LOGGING_LEVEL",
+          "valueFrom": "arn:aws:ssm:us-east-2:660315378336:parameter/doo-dah-aui/logging-level"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:8080/actuator/health/readiness || curl -f http://localhost:8080/actuator/health || curl -f http://localhost:8080/ || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 5,
+        "startPeriod": 120
+      }
+    }
+  ]
+}

@@ -7,17 +7,16 @@ import {styled} from "@mui/material/styles";
 function MainPage() {
     const Offset = styled('div')(({theme}) => ({
         ...theme.mixins.toolbar,
-        position: 'relative'
+        position: 'static'
     }));
     return (
-        <React.Fragment>
-            <Offset />
+        <div className={"size-full flex flex-col"}>
             <Offset />
             <TabNavigation>
                 <ChatComponent/>
                 <ContentSubmission/>
             </TabNavigation>
-        </React.Fragment>
+        </div>
     );
 }
 

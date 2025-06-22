@@ -1,0 +1,252 @@
+#!/bin/bash
+
+# Shell script to clean up AWS resources that cost money
+AWS_PROFILE="partyk1d24"
+REGION="us-east-2"
+
+echo "Cleaning up AWS resources that incur costs..."
+echo "AWS Profile: $AWS_PROFILE"
+echo "Region: $REGION"
+echo ""
+
+# Load ALB configuration if it exists
+ALB_ARN=""
+TARGET_GROUP_ARN=""
+ALB_SG_ID=""
+CERT_ARN=""
+
+if [[ -f "alb-config.env" ]]; then
+    source alb-config.env
+    echo "Loaded ALB configuration from alb-config.env"
+else
+    echo "No alb-config.env found, will try to discover resources..."
+fi
+
+# Function to safely run AWS commands
+run_aws_command() {
+    local description="$1"
+    local command="$2"
+    local suppress_output="${3:-false}"
+    
+    echo "🗑️ $description..."
+    if [[ "$suppress_output" == "true" ]]; then
+        if eval "$command --output text" >/dev/null 2>&1; then
+            echo "✅ $description completed"
+        else
+            echo "⚠️ $description failed (may not exist)"
+        fi
+    else
+        if eval "$command" >/dev/null 2>&1; then
+            echo "✅ $description completed"
+        else
+            echo "⚠️ $description failed (may not exist)"
+        fi
+    fi
+    echo ""
+}
+
+# 1. Scale down ECS service to 0 (stops tasks)
+echo "📉 Scaling down ECS service..."
+run_aws_command "Scale ECS service to 0" "aws ecs update-service --cluster doo-dah --service doo-dah-aui --desired-count 0 --region $REGION --profile $AWS_PROFILE" true
+
+# Wait for tasks to stop and force stop any remaining tasks
+echo "⏳ Waiting for all tasks to stop..."
+max_wait_time=120  # Wait up to 2 minutes for graceful shutdown
+wait_interval=5    # Check every 5 seconds
+total_waited=0
+
+while [ $total_waited -lt $max_wait_time ]; do
+    sleep $wait_interval
+    total_waited=$((total_waited + wait_interval))
+    
+    # Check service status first to see if it exists and is scaling down
+    service_status=$(aws ecs describe-services --cluster doo-dah --services doo-dah-aui --region $REGION --profile $AWS_PROFILE --query "services[0].status" --output text 2>/dev/null)
+    
+    if [ "$service_status" = "None" ] || [ -z "$service_status" ]; then
+        echo "⏳ Service no longer exists, checking for any remaining tasks..."
+        running_tasks=$(aws ecs list-tasks --cluster doo-dah --region $REGION --profile $AWS_PROFILE --query "taskArns" --output text 2>/dev/null)
+    else
+        # Get running tasks for the specific service
+        running_tasks=$(aws ecs list-tasks --cluster doo-dah --service-name doo-dah-aui --desired-status RUNNING --region $REGION --profile $AWS_PROFILE --query "taskArns" --output text 2>/dev/null)
+    fi
+    
+    if [ -n "$running_tasks" ] && [ "$running_tasks" != "None" ] && [ "$running_tasks" != "" ]; then
+        task_count=$(echo $running_tasks | wc -w)
+        echo "⏳ Still have $task_count running task(s), waiting... ($total_waited seconds elapsed)"
+        
+        # If we've waited too long, force stop the tasks
+        if [ $total_waited -ge $max_wait_time ]; then
+            echo "🔴 Timeout reached. Force stopping remaining tasks..."
+            for task_arn in $running_tasks; do
+                task_id=$(echo $task_arn | awk -F'/' '{print $NF}')
+                echo "🔴 Force stopping task: $task_id"
+                aws ecs stop-task --cluster doo-dah --task $task_id --region $REGION --profile $AWS_PROFILE --output text >/dev/null 2>&1
+            done
+            # Wait a bit more for force stop to complete
+            sleep 15
+            break
+        fi
+    else
+        echo "✅ All tasks have stopped"
+        break
+    fi
+done
+done
+
+# 2. Delete ECS service
+run_aws_command "Delete ECS service" "aws ecs delete-service --cluster doo-dah --service doo-dah-aui --region $REGION --profile $AWS_PROFILE" true
+
+# 2a. Wait for service deletion to complete by polling
+echo "⏳ Waiting for ECS service deletion to complete..."
+max_service_wait=60
+service_waited=0
+while [ $service_waited -lt $max_service_wait ]; do
+    sleep 5
+    service_waited=$((service_waited + 5))
+    
+    service_exists=$(aws ecs describe-services --cluster doo-dah --services doo-dah-aui --region $REGION --profile $AWS_PROFILE --query "services[0].serviceName" --output text 2>/dev/null)
+    
+    if [ -z "$service_exists" ] || [ "$service_exists" = "None" ] || [ "$service_exists" = "" ]; then
+        echo "✅ ECS service deletion completed"
+        break
+    else
+        echo "⏳ Still waiting for service deletion... ($service_waited seconds elapsed)"
+    fi
+done
+
+if [ $service_waited -ge $max_service_wait ]; then
+    echo "⚠️ Warning: Service deletion may still be in progress"
+fi
+
+# 2b. Force stop any remaining tasks in the cluster
+echo "🔍 Checking for any remaining tasks in cluster..."
+all_tasks=$(aws ecs list-tasks --cluster doo-dah --region $REGION --profile $AWS_PROFILE --query "taskArns" --output text 2>/dev/null)
+if [ -n "$all_tasks" ] && [ "$all_tasks" != "None" ] && [ "$all_tasks" != "" ]; then
+    echo "🔴 Force stopping all remaining tasks in cluster..."
+    for task_arn in $all_tasks; do
+        task_id=$(echo $task_arn | awk -F'/' '{print $NF}')
+        echo "🔴 Stopping task: $task_id"
+        aws ecs stop-task --cluster doo-dah --task $task_id --region $REGION --profile $AWS_PROFILE --output text >/dev/null 2>&1
+    done
+    
+    # Wait for all tasks to actually terminate
+    echo "⏳ Waiting for all tasks to terminate..."
+    max_task_wait=60
+    task_waited=0
+    while [ $task_waited -lt $max_task_wait ]; do
+        sleep 10
+        task_waited=$((task_waited + 10))
+        remaining_tasks=$(aws ecs list-tasks --cluster doo-dah --region $REGION --profile $AWS_PROFILE --query "taskArns" --output text 2>/dev/null)
+        if [ -z "$remaining_tasks" ] || [ "$remaining_tasks" = "None" ] || [ "$remaining_tasks" = "" ]; then
+            echo "✅ All tasks have terminated"
+            break
+        else
+            remaining_count=$(echo $remaining_tasks | wc -w)
+            echo "⏳ Still waiting for $remaining_count task(s) to terminate... ($task_waited seconds elapsed)"
+        fi
+    done
+    
+    if [ $task_waited -ge $max_task_wait ]; then
+        echo "⚠️ Warning: Some tasks may still be terminating"
+    fi
+fi
+
+# 3. Delete ECS cluster
+run_aws_command "Delete ECS cluster" "aws ecs delete-cluster --cluster doo-dah --region $REGION --profile $AWS_PROFILE" true
+
+# 4. Delete Application Load Balancer
+if [[ -n "$ALB_ARN" ]]; then
+    run_aws_command "Delete Application Load Balancer" "aws elbv2 delete-load-balancer --load-balancer-arn '$ALB_ARN' --region $REGION --profile $AWS_PROFILE" true
+else
+    echo "🔍 Looking for ALB by name..."
+    DISCOVERED_ALB_ARN=$(aws elbv2 describe-load-balancers --names doo-dah-aui-alb --region "$REGION" --profile "$AWS_PROFILE" --query "LoadBalancers[0].LoadBalancerArn" --output text 2>/dev/null)
+    if [[ -n "$DISCOVERED_ALB_ARN" && "$DISCOVERED_ALB_ARN" != "None" ]]; then
+        run_aws_command "Delete discovered ALB" "aws elbv2 delete-load-balancer --load-balancer-arn '$DISCOVERED_ALB_ARN' --region $REGION --profile $AWS_PROFILE" true
+    fi
+fi
+
+# 5. Delete Target Group
+if [[ -n "$TARGET_GROUP_ARN" ]]; then
+    run_aws_command "Delete Target Group" "aws elbv2 delete-target-group --target-group-arn '$TARGET_GROUP_ARN' --region $REGION --profile $AWS_PROFILE" true
+else
+    echo "🔍 Looking for target group by name..."
+    DISCOVERED_TG_ARN=$(aws elbv2 describe-target-groups --names doo-dah-aui-tg --region "$REGION" --profile "$AWS_PROFILE" --query "TargetGroups[0].TargetGroupArn" --output text 2>/dev/null)
+    if [[ -n "$DISCOVERED_TG_ARN" && "$DISCOVERED_TG_ARN" != "None" ]]; then
+        run_aws_command "Delete discovered Target Group" "aws elbv2 delete-target-group --target-group-arn '$DISCOVERED_TG_ARN' --region $REGION --profile $AWS_PROFILE" true
+    fi
+fi
+
+# 6. Delete Security Groups (wait a bit for ALB deletion to propagate)
+echo "⏳ Waiting 30 seconds for ALB deletion to propagate..."
+sleep 30
+
+if [[ -n "$ALB_SG_ID" ]]; then
+    run_aws_command "Delete ALB Security Group" "aws ec2 delete-security-group --group-id '$ALB_SG_ID' --region $REGION --profile $AWS_PROFILE" true
+fi
+
+# Try to find and delete ECS security group
+ECS_SG_ID=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=doo-dah-aui-sg" --region "$REGION" --profile "$AWS_PROFILE" --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
+if [[ -n "$ECS_SG_ID" && "$ECS_SG_ID" != "None" ]]; then
+    run_aws_command "Delete ECS Security Group" "aws ec2 delete-security-group --group-id '$ECS_SG_ID' --region $REGION --profile $AWS_PROFILE" true
+fi
+
+# Try to find and delete any remaining ALB security groups
+ALB_SG_DISCOVERED=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=doo-dah-aui-alb-sg" --region "$REGION" --profile "$AWS_PROFILE" --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
+if [[ -n "$ALB_SG_DISCOVERED" && "$ALB_SG_DISCOVERED" != "None" ]]; then
+    run_aws_command "Delete discovered ALB Security Group" "aws ec2 delete-security-group --group-id '$ALB_SG_DISCOVERED' --region $REGION --profile $AWS_PROFILE" true
+fi
+
+# 7. Delete SSL Certificate
+if [[ -n "$CERT_ARN" ]]; then
+    run_aws_command "Delete SSL Certificate" "aws acm delete-certificate --certificate-arn '$CERT_ARN' --region $REGION --profile $AWS_PROFILE" true
+else
+    # Try to find and delete certificate for doodah.secondave.net
+    DISCOVERED_CERT_ARN=$(aws acm list-certificates --region "$REGION" --profile "$AWS_PROFILE" --query "CertificateSummaryList[?DomainName=='doodah.secondave.net'].CertificateArn" --output text 2>/dev/null)
+    if [[ -n "$DISCOVERED_CERT_ARN" && "$DISCOVERED_CERT_ARN" != "None" ]]; then
+        run_aws_command "Delete discovered SSL Certificate" "aws acm delete-certificate --certificate-arn '$DISCOVERED_CERT_ARN' --region $REGION --profile $AWS_PROFILE" true
+    fi
+fi
+
+# 8. Optional: Delete ECR repository (commented out by default to preserve images)
+echo "🚨 ECR Repository Cleanup (commented out by default)"
+echo "   Uncomment the line below if you want to delete the ECR repository:"
+echo "   # aws ecr delete-repository --repository-name doo-dah-aui --force --region $REGION --profile $AWS_PROFILE"
+echo ""
+
+# 9. Optional: Delete Secrets and Parameters (commented out by default to preserve config)
+echo "🚨 Secrets and Parameters Cleanup (commented out by default)"
+echo "   Uncomment these lines if you want to delete secrets and parameters:"
+echo "   # aws secretsmanager delete-secret --secret-id doo-dah-aui/auth0-client-id --force-delete-without-recovery --region $REGION --profile $AWS_PROFILE"
+echo "   # aws secretsmanager delete-secret --secret-id doo-dah-aui/sqlite-password --force-delete-without-recovery --region $REGION --profile $AWS_PROFILE"
+echo "   # aws secretsmanager delete-secret --secret-id doo-dah-aui/pinecone-api-key --force-delete-without-recovery --region $REGION --profile $AWS_PROFILE"
+echo "   # aws ssm delete-parameter --name /doo-dah-aui/ollama-base-url --region $REGION --profile $AWS_PROFILE"
+echo "   # aws ssm delete-parameter --name /doo-dah-aui/ollama-model --region $REGION --profile $AWS_PROFILE"
+echo "   # aws ssm delete-parameter --name /doo-dah-aui/logging-level --region $REGION --profile $AWS_PROFILE"
+echo ""
+
+# 10. Clean up temporary files
+echo "🧹 Cleaning up temporary files..."
+rm -f alb-config.env ecs-task-definition-updated.json trust-policy.json
+echo "✅ Temporary files cleaned"
+
+echo ""
+echo "🎉 AWS cleanup complete!"
+echo ""
+echo "💰 Resources that have been deleted (no longer costing money):"
+echo "   ✅ ECS Fargate tasks and service"
+echo "   ✅ Application Load Balancer"
+echo "   ✅ Target Groups"
+echo "   ✅ Security Groups"
+echo "   ✅ SSL Certificate"
+echo ""
+echo "💾 Resources preserved (no ongoing cost):"
+echo "   📦 ECR Repository (only storage cost)"
+echo "   🔐 Secrets Manager secrets (small monthly cost)"
+echo "   📋 SSM Parameters (no cost)"
+echo ""
+echo "🔄 To redeploy, run the deployment scripts again:"
+echo "   1. ./scripts/setup-aws-secrets.sh (if you deleted secrets)"
+echo "   2. ./scripts/push-to-ecr.sh"
+echo "   3. ./scripts/deploy-to-ecs.sh"
+echo "   4. ./scripts/alb-setup.sh"
+echo "   5. ./scripts/complete-alb-setup.sh"

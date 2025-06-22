@@ -1,0 +1,68 @@
+app:
+  auth:
+    domain: jackiergleason.auth0.com
+    clientId: ${AUTH0_CLIENT_ID:#{aws:secretsmanager:doo-dah-aui/auth0-client-id}}
+    scope: openid profile email add:documents site:admin
+spring:
+  datasource:
+    url: jdbc:sqlite:database.db
+    driver-class-name: org.sqlite.JDBC
+    username: sa
+    password: ${SQLITE_PASSWORD:#{aws:secretsmanager:doo-dah-aui/sqlite-password}}
+  ai:
+    vectorstore:
+      pinecone:
+        environment: aped-4627-b74a
+        projectId: bk8jiap
+        apiKey: ${PINECONE_API_KEY:#{aws:secretsmanager:doo-dah-aui/pinecone-api-key}}
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:#{aws:ssm:/doo-dah-aui/ollama-base-url}}
+      chat:
+        options:
+          model: ${OLLAMA_MODEL:#{aws:ssm:/doo-dah-aui/ollama-model}}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://jackiergleason.auth0.com/
+          jwk-set-uri: https://jackiergleason.auth0.com/.well-known/jwks.json
+          audiences: https://thejackiegleason.com
+
+# Spring Boot Actuator configuration for health checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+# Server configuration
+server:
+  port: 8080
+  # Graceful shutdown for better container lifecycle management
+  shutdown: graceful
+
+# Logging configuration for AWS
+logging:
+  level:
+    org.springframework.ai: ${LOGGING_LEVEL:#{aws:ssm:/doo-dah-aui/logging-level}}
+    org.springframework.data.mongodb: ${LOGGING_LEVEL:#{aws:ssm:/doo-dah-aui/logging-level}}
+    org.example.advisors: ${LOGGING_LEVEL:#{aws:ssm:/doo-dah-aui/logging-level}}
+    org.springframework.security: ${LOGGING_LEVEL:#{aws:ssm:/doo-dah-aui/logging-level}}
+    org.springframework.security.oauth2: ${LOGGING_LEVEL:#{aws:ssm:/doo-dah-aui/logging-level}}
+    org.springframework.web: ${LOGGING_LEVEL:#{aws:ssm:/doo-dah-aui/logging-level}}
+    org.jgleason.personal: ${LOGGING_LEVEL:#{aws:ssm:/doo-dah-aui/logging-level}}
+    root: ${LOGGING_LEVEL:#{aws:ssm:/doo-dah-aui/logging-level}}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

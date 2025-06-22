@@ -1,0 +1,26 @@
+{
+  "serviceName": "doo-dah-aui-service",
+  "cluster": "doo-dah-cluster",
+  "taskDefinition": "doo-dah-aui-task",
+  "desiredCount": 1,
+  "launchType": "FARGATE",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": [
+        "subnet-xxxxxxxxx",
+        "subnet-yyyyyyyyy"
+      ],
+      "securityGroups": [
+        "sg-xxxxxxxxx"
+      ],
+      "assignPublicIp": "ENABLED"
+    }
+  },
+  "loadBalancers": [
+    {
+      "targetGroupArn": "arn:aws:elasticloadbalancing:us-east-2:{ACCOUNT_ID}:targetgroup/doo-dah-tg/{TARGET_GROUP_ID}",
+      "containerName": "doo-dah-aui",
+      "containerPort": 8080
+    }
+  ]
+}

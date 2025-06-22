@@ -2,6 +2,8 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.0'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.google.cloud.tools.jib' version '3.4.5'
+	id 'com.github.node-gradle.node' version '7.1.0'
 }
 
 group = 'doo.dah.aui'
@@ -76,4 +78,42 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+// Configure the Node.js plugin
+node {
+	version = '20.11.0'
+	download = true
+	workDir = file('../ui')
+	nodeProjectDir = file('../ui')
+}
+
+// Task to copy UI build output to Spring Boot static resources
+task copyUI(type: Copy, dependsOn: 'npm_run_build') {
+	from '../ui/dist'
+	into 'src/main/resources/static'
+}
+
+// Make processResources depend on the UI build so it's included in the JAR
+tasks.named('processResources').configure {
+	dependsOn copyUI
+}
+
+jib {
+	from {
+		image = 'openjdk:24-jdk-slim'
+	}
+	to {
+		image = '660315378336.dkr.ecr.us-east-2.amazonaws.com/doo-dah-aui'
+		tags = ['latest', version]
+	}
+	container {
+		ports = ['8080']
+		mainClass = 'doo.dah.aui.artificial_unintelligence.ArtificialUnIntelligenceApplication'
+		jvmFlags = ['-Xms512m', '-Xmx1024m']
+		environment = [
+			'SPRING_PROFILES_ACTIVE': 'aws'
+		]
+	}
+	allowInsecureRegistries = true
 }
