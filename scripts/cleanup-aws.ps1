@@ -29,7 +29,8 @@ function Invoke-AWSCommand {
     param([string]$Description, [string]$Command, [switch]$SuppressOutput)
     
     Write-Host "Deleting $Description..." -ForegroundColor Yellow
-    try {        if ($SuppressOutput) {
+    try {
+        if ($SuppressOutput) {
             $null = Invoke-Expression "$Command 2>`$null"
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "Successfully deleted $Description" -ForegroundColor Green
@@ -50,6 +51,50 @@ function Invoke-AWSCommand {
     Write-Host ""
 }
 
+# Function to try deleting a security group with retries
+function Remove-SecurityGroupWithRetry {
+    param(
+        [string]$GroupId,
+        [string]$Description,
+        [int]$MaxRetries = 6,
+        [int]$RetryInterval = 10
+    )
+    
+    if (-not $GroupId -or $GroupId -eq "None" -or $GroupId -eq "") {
+        Write-Host "No $Description to delete (empty GroupId)" -ForegroundColor Yellow
+        return
+    }
+    
+    Write-Host "Attempting to delete $Description (ID: $GroupId)..." -ForegroundColor Yellow
+    
+    for ($retry = 1; $retry -le $MaxRetries; $retry++) {
+        try {
+            $result = aws ec2 delete-security-group --group-id $GroupId --region $REGION --profile $AWS_PROFILE 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "Successfully deleted $Description" -ForegroundColor Green
+                return
+            } else {
+                $errorMessage = $result | Out-String
+                if ($errorMessage -match "DependencyViolation") {
+                    Write-Host "Retry $retry of $MaxRetries : $Description still has dependencies, waiting..." -ForegroundColor Yellow
+                    Start-Sleep -Seconds $RetryInterval
+                } elseif ($errorMessage -match "InvalidGroup") {
+                    Write-Host "$Description does not exist or was already deleted" -ForegroundColor Yellow
+                    return
+                } else {
+                    Write-Host "Failed to delete $Description : $errorMessage" -ForegroundColor Yellow
+                    return
+                }
+            }
+        } catch {
+            Write-Host "Error deleting $Description : $($_.Exception.Message)" -ForegroundColor Yellow
+            return
+        }
+    }
+    
+    Write-Host "Warning: Could not delete $Description after $MaxRetries attempts" -ForegroundColor Yellow
+}
+
 # 1. Scale down ECS service to 0 (stops tasks)
 Write-Host "Scaling down ECS service..." -ForegroundColor Yellow
 Invoke-AWSCommand "ECS service scale-down" "aws ecs update-service --cluster doo-dah --service doo-dah-aui --desired-count 0 --region $REGION --profile $AWS_PROFILE --output text" -SuppressOutput
@@ -63,51 +108,83 @@ $totalWaited = 0
 do {
     Start-Sleep -Seconds $waitInterval
     $totalWaited += $waitInterval
-      # Check service status first to see if it exists and is scaling down
+    
+    # Check service status first to see if it exists and is scaling down
     $serviceStatus = aws ecs describe-services --cluster doo-dah --services doo-dah-aui --region $REGION --profile $AWS_PROFILE --query "services[0].status" --output text 2>$null
     Write-Host "DEBUG: Service status: '$serviceStatus'" -ForegroundColor Magenta
     
     if ($serviceStatus -eq "None" -or -not $serviceStatus) {
         Write-Host "Service no longer exists, checking for any remaining tasks..." -ForegroundColor Yellow
-        # Check for ANY tasks in the cluster, regardless of status
-        $allTasks = aws ecs list-tasks --cluster doo-dah --region $REGION --profile $AWS_PROFILE --query "taskArns" --output text 2>$null
-        Write-Host "DEBUG: All tasks in cluster: '$allTasks'" -ForegroundColor Magenta
+        # Use JSON output for better parsing
+        $allTasksJson = aws ecs list-tasks --cluster doo-dah --region $REGION --profile $AWS_PROFILE --query "taskArns" --output json 2>$null
+        Write-Host "DEBUG: All tasks in cluster JSON: '$allTasksJson'" -ForegroundColor Magenta
+        
+        try {
+            $taskArray = $allTasksJson | ConvertFrom-Json
+            $allTasks = if ($taskArray -and $taskArray.Count -gt 0) { $taskArray -join " " } else { "" }
+        } catch {
+            $allTasks = ""
+        }
     } else {
-        # Get ALL tasks for the specific service (running, pending, stopping, etc.)
-        $allTasks = aws ecs list-tasks --cluster doo-dah --service-name doo-dah-aui --region $REGION --profile $AWS_PROFILE --query "taskArns" --output text 2>$null
-        Write-Host "DEBUG: Service-specific tasks: '$allTasks'" -ForegroundColor Magenta
-    }      if ($allTasks -and $allTasks -ne "None" -and $allTasks.Trim() -ne "") {
-        $taskList = $allTasks -split "`s+" | Where-Object { $_ -ne "" }
+        # Get ALL tasks for the specific service
+        $allTasksJson = aws ecs list-tasks --cluster doo-dah --service-name doo-dah-aui --region $REGION --profile $AWS_PROFILE --query "taskArns" --output json 2>$null
+        Write-Host "DEBUG: Service-specific tasks JSON: '$allTasksJson'" -ForegroundColor Magenta
+        
+        try {
+            $taskArray = $allTasksJson | ConvertFrom-Json
+            $allTasks = if ($taskArray -and $taskArray.Count -gt 0) { $taskArray -join " " } else { "" }
+        } catch {
+            $allTasks = ""
+        }
+    }
+    
+    if ($allTasks -and $allTasks -ne "None" -and $allTasks.Trim() -ne "") {
+        $taskList = $allTasks -split "`s+" | Where-Object { $_ -ne "" -and $_ -ne "None" }
         Write-Host "DEBUG: Found $($taskList.Count) total tasks" -ForegroundColor Magenta
         
         # Get detailed status of tasks and filter out STOPPED tasks
         if ($taskList.Count -gt 0) {
-            Write-Host "DEBUG: Getting task details..." -ForegroundColor Magenta
-            $taskDetailsJson = aws ecs describe-tasks --cluster doo-dah --tasks ($taskList -join " ") --region $REGION --profile $AWS_PROFILE --query "tasks[].{Arn:taskArn,Status:lastStatus}" --output json 2>$null
-            Write-Host "DEBUG: Raw task details JSON: '$taskDetailsJson'" -ForegroundColor Magenta
+            Write-Host "DEBUG: Getting task details for tasks: $($taskList -join ', ')" -ForegroundColor Magenta
             
-            $allTaskDetails = $taskDetailsJson | ConvertFrom-Json
-            Write-Host "DEBUG: All task details count: $($allTaskDetails.Count)" -ForegroundColor Magenta
-            
-            # Filter out STOPPED tasks
-            $taskDetails = $allTaskDetails | Where-Object { $_.Status -ne "STOPPED" }
-            Write-Host "DEBUG: Active (non-STOPPED) task details count: $($taskDetails.Count)" -ForegroundColor Magenta
-            
-            if ($taskDetails) {
-                $activeTasks = @($taskDetails)
-                $taskCount = $activeTasks.Count
+            # Try to get task details with better error handling
+            try {
+                $taskDetailsResult = aws ecs describe-tasks --cluster doo-dah --tasks ($taskList -join " ") --region $REGION --profile $AWS_PROFILE 2>&1
                 
-                Write-Host "Active task statuses:" -ForegroundColor Cyan
-                foreach ($task in $activeTasks) {
-                    $taskId = $task.Arn.Split('/')[-1]
-                    Write-Host "  Task $taskId : $($task.Status)" -ForegroundColor White
+                if ($LASTEXITCODE -eq 0) {
+                    $taskDetailsJson = $taskDetailsResult | ConvertFrom-Json
+                    Write-Host "DEBUG: Successfully got details for $($taskDetailsJson.tasks.Count) tasks" -ForegroundColor Magenta
+                    
+                    # Filter out STOPPED tasks
+                    $activeTasks = $taskDetailsJson.tasks | Where-Object { $_.lastStatus -ne "STOPPED" }
+                    
+                    if ($activeTasks) {
+                        $taskCount = $activeTasks.Count
+                        
+                        Write-Host "Active task statuses:" -ForegroundColor Cyan
+                        foreach ($task in $activeTasks) {
+                            $taskId = $task.taskArn.Split('/')[-1]
+                            Write-Host "  Task $taskId : $($task.lastStatus)" -ForegroundColor White
+                        }
+                    } else {
+                        $taskCount = 0
+                        Write-Host "DEBUG: All tasks are STOPPED" -ForegroundColor Magenta
+                    }
+                } else {
+                    Write-Host "DEBUG: Failed to get task details: $taskDetailsResult" -ForegroundColor Red
+                    # If we can't get details, assume tasks are still active for safety
+                    $taskCount = $taskList.Count
+                    $activeTasks = $taskList | ForEach-Object { @{ taskArn = $_ } }
                 }
-            } else {
-                $taskCount = 0
+            } catch {
+                Write-Host "DEBUG: Exception getting task details: $($_.Exception.Message)" -ForegroundColor Red
+                # If we can't get details, assume tasks are still active for safety
+                $taskCount = $taskList.Count
+                $activeTasks = $taskList | ForEach-Object { @{ taskArn = $_ } }
             }
         } else {
             $taskCount = 0
-        }        
+        }
+        
         if ($taskCount -gt 0) {
             Write-Host "Still have $taskCount active task(s), waiting... ($totalWaited seconds elapsed)" -ForegroundColor Yellow
             
@@ -115,7 +192,8 @@ do {
             if ($totalWaited -ge $maxWaitTime) {
                 Write-Host "Timeout reached. Force stopping remaining active tasks..." -ForegroundColor Red
                 foreach ($task in $activeTasks) {
-                    $taskId = $task.Arn.Split('/')[-1]
+                    $taskArn = if ($task.taskArn) { $task.taskArn } else { $task }
+                    $taskId = $taskArn.Split('/')[-1]
                     Write-Host "Force stopping task: $taskId" -ForegroundColor Yellow
                     aws ecs stop-task --cluster doo-dah --task $taskId --region $REGION --profile $AWS_PROFILE --output text 2>$null
                 }
@@ -137,72 +215,86 @@ do {
 # 2. Delete ECS service
 Invoke-AWSCommand "ECS service" "aws ecs delete-service --cluster doo-dah --service doo-dah-aui --region $REGION --profile $AWS_PROFILE --output text" -SuppressOutput
 
-# 2a. Wait for service deletion to complete by polling
-Write-Host "Waiting for ECS service deletion to complete..." -ForegroundColor Yellow
-$maxServiceWait = 60
-$serviceWaited = 0
-do {
-    Start-Sleep -Seconds 5
-    $serviceWaited += 5
-    
-    $serviceExistsResult = aws ecs describe-services --cluster doo-dah --services doo-dah-aui --region $REGION --profile $AWS_PROFILE --query "services[0]" --output json 2>$null
-    Write-Host "DEBUG: Service exists result: '$serviceExistsResult'" -ForegroundColor Magenta
-    
-    try {
-        $serviceInfo = $serviceExistsResult | ConvertFrom-Json
-        if ($serviceInfo -and $serviceInfo.serviceName) {
-            $serviceStatus = $serviceInfo.status
-            Write-Host "DEBUG: Service still exists with status: '$serviceStatus'" -ForegroundColor Magenta
-            Write-Host "Still waiting for service deletion... ($serviceWaited seconds elapsed)" -ForegroundColor Yellow
-        } else {
-            Write-Host "DEBUG: Service no longer exists" -ForegroundColor Magenta
-            Write-Host "ECS service deletion completed" -ForegroundColor Green
-            break
-        }
-    } catch {
-        Write-Host "DEBUG: Error parsing service info or service doesn't exist: $($_.Exception.Message)" -ForegroundColor Magenta
-        Write-Host "ECS service deletion completed" -ForegroundColor Green
-        break
-    }
-} while ($serviceWaited -lt $maxServiceWait)
+# 2a. Check service status and proceed when ready (INACTIVE is normal and ready for cleanup)
+Write-Host "Checking service status before proceeding..." -ForegroundColor Yellow
+$serviceExistsResult = aws ecs describe-services --cluster doo-dah --services doo-dah-aui --region $REGION --profile $AWS_PROFILE --query "services[0]" --output json 2>$null
 
-if ($serviceWaited -ge $maxServiceWait) {
-    Write-Host "Warning: Service deletion may still be in progress" -ForegroundColor Yellow
+try {
+    $serviceInfo = $serviceExistsResult | ConvertFrom-Json
+    if ($serviceInfo -and $serviceInfo.serviceName) {
+        $serviceStatus = $serviceInfo.status
+        $runningCount = $serviceInfo.runningCount
+        $pendingCount = $serviceInfo.pendingCount
+        
+        Write-Host "Service status: $serviceStatus, Running: $runningCount, Pending: $pendingCount" -ForegroundColor Cyan
+        
+        # INACTIVE services with 0 running/pending tasks are ready for cleanup
+        # ECS services don't disappear completely - they just become INACTIVE
+        if ($serviceStatus -eq "INACTIVE" -or $serviceStatus -eq "DRAINING" -or ($runningCount -eq 0 -and $pendingCount -eq 0)) {
+            Write-Host "Service is INACTIVE/stopped and ready for cleanup - proceeding immediately..." -ForegroundColor Green
+        } else {
+            Write-Host "Service still has active tasks. Waiting 30 seconds for service to stabilize..." -ForegroundColor Yellow
+            Start-Sleep -Seconds 30
+        }
+    } else {
+        Write-Host "Service no longer exists - proceeding with cleanup..." -ForegroundColor Green
+    }
+} catch {
+    Write-Host "Service check failed or service doesn't exist - proceeding with cleanup..." -ForegroundColor Green
 }
 
 # 2b. Force stop any remaining tasks in the cluster
 Write-Host "Checking for any remaining tasks in cluster..." -ForegroundColor Yellow
-$allTasks = aws ecs list-tasks --cluster doo-dah --region $REGION --profile $AWS_PROFILE --query "taskArns" --output text 2>$null
-if ($allTasks -and $allTasks -ne "None" -and $allTasks.Trim() -ne "") {
-    Write-Host "Force stopping all remaining tasks in cluster..." -ForegroundColor Red
-    $taskList = $allTasks -split "`s+" | Where-Object { $_ -ne "" }
-    foreach ($taskArn in $taskList) {
-        # Extract task ID from ARN (everything after the last /)
-        $taskId = $taskArn.Split('/')[-1]
-        Write-Host "Stopping task: $taskId" -ForegroundColor Yellow
-        aws ecs stop-task --cluster doo-dah --task $taskId --region $REGION --profile $AWS_PROFILE --output text 2>$null
-    }
-    
-    # Wait for all tasks to actually terminate
-    Write-Host "Waiting for all tasks to terminate..." -ForegroundColor Yellow
-    $maxTaskWait = 60
-    $taskWaited = 0
-    do {
-        Start-Sleep -Seconds 10
-        $taskWaited += 10
-        $remainingTasks = aws ecs list-tasks --cluster doo-dah --region $REGION --profile $AWS_PROFILE --query "taskArns" --output text 2>$null
-        if (-not $remainingTasks -or $remainingTasks -eq "None" -or $remainingTasks.Trim() -eq "") {
-            Write-Host "All tasks have terminated" -ForegroundColor Green
-            break
+$allTasksJson = aws ecs list-tasks --cluster doo-dah --region $REGION --profile $AWS_PROFILE --query "taskArns" --output json 2>$null
+
+if ($allTasksJson -and $allTasksJson -ne "[]" -and $allTasksJson.Trim() -ne "") {
+    try {
+        $taskArray = $allTasksJson | ConvertFrom-Json
+        if ($taskArray -and $taskArray.Count -gt 0) {
+            Write-Host "Force stopping all remaining tasks in cluster..." -ForegroundColor Red
+            
+            foreach ($taskArn in $taskArray) {
+                # Extract task ID from ARN (everything after the last /)
+                $taskId = $taskArn.Split('/')[-1]
+                Write-Host "Stopping task: $taskId" -ForegroundColor Yellow
+                aws ecs stop-task --cluster doo-dah --task $taskId --reason "Cleanup script force stop" --region $REGION --profile $AWS_PROFILE --output text 2>$null
+            }
+            
+            # Wait for all tasks to actually terminate
+            Write-Host "Waiting for all tasks to terminate..." -ForegroundColor Yellow
+            $maxTaskWait = 60
+            $taskWaited = 0
+            do {
+                Start-Sleep -Seconds 10
+                $taskWaited += 10
+                $remainingTasksJson = aws ecs list-tasks --cluster doo-dah --region $REGION --profile $AWS_PROFILE --query "taskArns" --output json 2>$null
+                
+                try {
+                    $remainingTaskArray = $remainingTasksJson | ConvertFrom-Json
+                    if (-not $remainingTaskArray -or $remainingTaskArray.Count -eq 0) {
+                        Write-Host "All tasks have terminated" -ForegroundColor Green
+                        break
+                    } else {
+                        Write-Host "Still waiting for $($remainingTaskArray.Count) task(s) to terminate... ($taskWaited seconds elapsed)" -ForegroundColor Yellow
+                    }
+                } catch {
+                    Write-Host "All tasks have terminated" -ForegroundColor Green
+                    break
+                }
+            } while ($taskWaited -lt $maxTaskWait)
+            
+            if ($taskWaited -ge $maxTaskWait) {
+                Write-Host "Warning: Some tasks may still be terminating" -ForegroundColor Yellow
+            }
         } else {
-            $remainingCount = ($remainingTasks -split "`s+" | Where-Object { $_ -ne "" }).Count
-            Write-Host "Still waiting for $remainingCount task(s) to terminate... ($taskWaited seconds elapsed)" -ForegroundColor Yellow
+            Write-Host "No tasks found in cluster" -ForegroundColor Green
         }
-    } while ($taskWaited -lt $maxTaskWait)
-    
-    if ($taskWaited -ge $maxTaskWait) {
-        Write-Host "Warning: Some tasks may still be terminating" -ForegroundColor Yellow
+    } catch {
+        Write-Host "Error parsing task list: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Raw task list: $allTasksJson" -ForegroundColor Magenta
     }
+} else {
+    Write-Host "No tasks found in cluster" -ForegroundColor Green
 }
 
 # 3. Delete ECS cluster
@@ -263,45 +355,6 @@ if ($TARGET_GROUP_ARN) {
 
 # 6. Delete Security Groups with intelligent retry
 Write-Host "Deleting security groups..." -ForegroundColor Yellow
-
-# Function to try deleting a security group with retries
-function Remove-SecurityGroupWithRetry {
-    param(
-        [string]$GroupId,
-        [string]$Description,
-        [int]$MaxRetries = 6,
-        [int]$RetryInterval = 10
-    )
-    
-    if (-not $GroupId -or $GroupId -eq "None") {
-        return
-    }
-    
-    Write-Host "Attempting to delete $Description (ID: $GroupId)..." -ForegroundColor Yellow
-    
-    for ($retry = 1; $retry -le $MaxRetries; $retry++) {
-        try {
-            $result = aws ec2 delete-security-group --group-id $GroupId --region $REGION --profile $AWS_PROFILE 2>&1
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "Successfully deleted $Description" -ForegroundColor Green
-                return
-            } else {
-                $errorMessage = $result | Out-String                if ($errorMessage -match "DependencyViolation") {
-                    Write-Host "Retry $retry of $MaxRetries : $Description still has dependencies, waiting..." -ForegroundColor Yellow
-                    Start-Sleep -Seconds $RetryInterval
-                } else {
-                    Write-Host "Failed to delete $Description : $errorMessage" -ForegroundColor Yellow
-                    return
-                }
-            }
-        } catch {
-            Write-Host "Error deleting $Description : $_" -ForegroundColor Yellow
-            return
-        }
-    }
-    
-    Write-Host "Warning: Could not delete $Description after $MaxRetries attempts" -ForegroundColor Yellow
-}
 
 # Delete ALB Security Group
 if ($ALB_SG_ID) {
