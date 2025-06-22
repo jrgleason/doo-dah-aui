@@ -1,6 +1,14 @@
 # Compiled class file
 *.class
 
+# AWS deployment temporary files
+alb-config.env
+ecs-task-definition-updated.json
+ecs-task-definition-ecr.json
+ecs-task-definition-external.json
+trust-policy.json
+ui/node-v20.11.0-win-x64/
+
 # Log file
 *.log
 
