@@ -1,3 +1,41 @@
+# Set default behavior to automatically normalize line endings.
+* text=auto
+
+# Shell scripts should always use LF (Unix) line endings
 /gradlew text eol=lf
+*.sh text eol=lf
+
+# Windows scripts should use CRLF line endings
 *.bat text eol=crlf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+
+# Explicitly declare other text files
+*.md text
+*.txt text
+*.java text
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+*.json text
+*.xml text
+*.yaml text
+*.yml text
+*.properties text
+*.gradle text
+
+# Binary files
 *.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.war binary
+*.ear binary
+*.class binary
+*.dll binary
+*.exe binary
+*.so binary
+*.dylib binary
